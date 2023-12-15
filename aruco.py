@@ -1,35 +1,29 @@
-import cv2 as cv
-from pyautogui import size
+import cv2
+import cv2.aruco as aruco
 
-# Getting window dimensions with pyautogui lib
-ScreenWidth,ScreenHeight=size()
-ScreenWidth=ScreenWidth/2
-ScreenHeight=ScreenHeight/2
+cap = cv2.VideoCapture(0)
 
-# Loading the image
-cap=cv.imread("ArucoBoard.png")
+aruco_dict = aruco.getPredefinedDictionary(aruco.DICT_ARUCO_ORIGINAL)
 
-# Rescaling the image to the window dimensions
-#cap = cv.resize(cap,(ScreenWidth.__floor__(),ScreenHeight.__floor__()),interpolation=cv.INTER_LINEAR)
-#cap = cv.resize(cap,(0,0),fx=1,fy=1)
+parameters = aruco.DetectorParameters()
+detector = aruco.ArucoDetector(aruco_dict, parameters)
 
-def findThatAruco(img,markersize=5,totalmarkers=50):
-    gray=cv.cvtColor(img,cv.COLOR_BGR2GRAY)
-    k=getattr(cv.aruco,f'DICT_{markersize}X{markersize}_{totalmarkers}')
-    arucoDict=cv.aruco.Dictionary_get(k)
-    arucoParam=cv.aruco.DetectorParameters_create()
-    bbox,ids,_=cv.aruco.detectMarkers(gray,arucoDict,parameters=arucoParam)
-    cv.aruco.drawDetectedMarkers(img,bbox)
-    return bbox,ids
+while True:
+    ret, frame = cap.read()
 
-key = 0
+    gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 
-while (key!=27):
+    corners, ids, rejectedCandidates = detector.detectMarkers(frame)
 
-    cap = cv.imread("ArucoBoard.png")
-    cap = cv.resize(cap, (0, 0), fx=2, fy=2)
+    if ids is not None:
+        frame = aruco.drawDetectedMarkers(frame, corners, ids)
+        if ids[0]==132:
+            print("Notre Aruco")
 
-    bbox,ids=findThatAruco(cap)
-    cv.imshow('cap',cap)
+    cv2.imshow('ArUco Detection', frame)
 
-    key=cv.waitKey(1)
+    if cv2.waitKey(1) & 0xFF == ord('q'):
+        break
+
+cap.release()
+cv2.destroyAllWindows()
