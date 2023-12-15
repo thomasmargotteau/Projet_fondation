@@ -1,10 +1,10 @@
 import numpy as np
 import cv2 as cv
 
-ComputerCamera=0;
-Black=(0,0,0)
+ComputerCamera = 0
+Black = (0, 0, 0)
 
-TextFont=cv.FONT_HERSHEY_SIMPLEX
+TextFont = cv.FONT_HERSHEY_SIMPLEX
 
 # Blue
 BlueMin = np.array([94, 80, 2], np.uint8)
@@ -18,105 +18,72 @@ RedMax = np.array([180, 255, 255], np.uint8)
 GreenMin = np.array([25, 52, 72], np.uint8)
 GreenMax = np.array([102, 255, 255], np.uint8)
 
-cap=cv.VideoCapture(ComputerCamera)
+# White
+WhiteMin = np.array([0, 0, 200], np.uint8)
+WhiteMax = np.array([180, 30, 255], np.uint8)
+
+# Black
+BlackMin = np.array([0, 0, 0], np.uint8)
+BlackMax = np.array([180, 255, 30], np.uint8)
+
+cap = cv.VideoCapture(ComputerCamera)
 
 if not cap.isOpened():
     print("Camera cannot be opened")
     exit()
-while True :
-    ret, frame=cap.read()
+
+while True:
+    ret, frame = cap.read()
 
     if not ret:
-        print("Error access to camera data")
+        print("Error accessing camera data")
         break
 
-    BgrToHsvFrame=cv.cvtColor(frame,cv.COLOR_BGR2HSV)
-
-    #BgrToGrayFrame = cv.cvtColor(frame, cv.COLOR_BGR2GRAY)
-    #BgrToGrayFrame = np.float32(BgrToGrayFrame)
-
-    #CornerHarris=cv.cornerHarris(BgrToGrayFrame,2,3,0.04)
-    #CornerHarris=cv.dilate(CornerHarris,None)
-
-    #frame[CornerHarris>0.01*CornerHarris.max()]=[0,0,255]
+    BgrToHsvFrame = cv.cvtColor(frame, cv.COLOR_BGR2HSV)
 
     BlueMask = cv.inRange(BgrToHsvFrame, BlueMin, BlueMax)
     RedMask = cv.inRange(BgrToHsvFrame, RedMin, RedMax)
     GreenMask = cv.inRange(BgrToHsvFrame, GreenMin, GreenMax)
+    WhiteMask = cv.inRange(BgrToHsvFrame, WhiteMin, WhiteMax)
+    BlackMask = cv.inRange(BgrToHsvFrame, BlackMin, BlackMax)
 
     kernel = np.ones((5, 5), "uint8")
 
-    BlueMask = cv.dilate(BlueMask, kernel)
-    res_blue = cv.bitwise_and(frame, frame,
-                               mask=BlueMask)
+    masks = [BlueMask, RedMask, GreenMask, WhiteMask, BlackMask]
 
-    RedMask = cv.dilate(RedMask, kernel)
-    res_red = cv.bitwise_and(frame, frame,
-                              mask=RedMask)
+    for idx, color_mask in enumerate(masks):
+        color = None
+        if idx == 0:
+            color = (255, 0, 0)  # Blue
+            color_text = "Bleu"
+        elif idx == 1:
+            color = (0, 0, 255)  # Red
+            color_text = "Rouge"
+        elif idx == 2:
+            color = (0, 255, 0)  # Green
+            color_text = "Vert"
+        elif idx == 3:
+            color = (255, 255, 255)  # White
+            color_text = "Blanc"
+        elif idx == 4:
+            color = (0, 0, 0)  # Black
+            color_text = "Noir"
 
-    GreenMask = cv.dilate(GreenMask, kernel)
-    res_green = cv.bitwise_and(frame, frame,
-                             mask=GreenMask)
+        color_mask = cv.dilate(color_mask, kernel)
+        res = cv.bitwise_and(frame, frame, mask=color_mask)
 
-    # Creating contour to track blue color
-    contours, hierarchy = cv.findContours(BlueMask,
-                                           cv.RETR_TREE,
-                                           cv.CHAIN_APPROX_SIMPLE)
-    for pic, contour in enumerate(contours):
-        area = cv.contourArea(contour)
-        if (area > 300):
-            x, y, w, h = cv.boundingRect(contour)
-            imageFrame = cv.rectangle(frame, (x, y),
-                                       (x + w, y + h),
-                                       (255, 0, 0), 2)
+        contours, hierarchy = cv.findContours(color_mask, cv.RETR_TREE, cv.CHAIN_APPROX_SIMPLE)
 
-            cv.putText(frame, "Bleu", (x, y),
-                        TextFont,
-                        1.0, (255, 0, 0))
+        for contour in contours:
+            area = cv.contourArea(contour)
+            if area > 300:
+                x, y, w, h = cv.boundingRect(contour)
+                imageFrame = cv.rectangle(frame, (x, y), (x + w, y + h), color, 2)
+                cv.putText(imageFrame, color_text, (x, y), TextFont, 1.0, color)
 
-    contours, hierarchy = cv.findContours(RedMask,
-                                           cv.RETR_TREE,
-                                           cv.CHAIN_APPROX_SIMPLE)
+    cv.imshow('frame', frame)
 
-    # Creating contour to track red color
-    for pic, contour in enumerate(contours):
-        area = cv.contourArea(contour)
-        if (area > 300):
-            x, y, w, h = cv.boundingRect(contour)
-            imageFrame = cv.rectangle(frame, (x, y),
-                                       (x + w, y + h),
-                                       (0, 0, 255), 2)
-
-            cv.putText(imageFrame, "Rouge", (x, y),
-                        cv.FONT_HERSHEY_SIMPLEX, 1.0,
-                        (0, 0, 255))
-
-    # Creating contour to track green color
-    contours, hierarchy = cv.findContours(GreenMask,
-                                           cv.RETR_TREE,
-                                           cv.CHAIN_APPROX_SIMPLE)
-
-    for pic, contour in enumerate(contours):
-        area = cv.contourArea(contour)
-        if (area > 300):
-            x, y, w, h = cv.boundingRect(contour)
-            imageFrame = cv.rectangle(frame, (x, y),
-                                       (x + w, y + h),
-                                       (0, 255, 0), 2)
-
-            cv.putText(imageFrame, "Vert", (x, y),
-                        cv.FONT_HERSHEY_SIMPLEX,
-                        1.0, (0, 255, 0))
-
-    #gray=cv.cvtColor(frame,cv.COLOR_BGR2GRAY)
-    #cv.imshow('frame')
-
-    #cv.rectangle(frame,RectangleTopLeftCorner,RectangleBotRightCorner,Black,2)
-    #cv.putText(frame,"Testing...",(10,180),TextFont,4,Black,2)
-
-    cv.imshow('frame',frame)
-
-    if cv.waitKey(1)==ord('q'):
+    if cv.waitKey(1) == ord('q'):
         break
 
 cap.release()
