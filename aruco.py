@@ -13,7 +13,7 @@ cap=cv.imread("ArucoBoard.png")
 #cap = cv.resize(cap,(ScreenWidth.__floor__(),ScreenHeight.__floor__()),interpolation=cv.INTER_LINEAR)
 #cap = cv.resize(cap,(0,0),fx=1,fy=1)
 
-def findThatAruco(img,markersize=6,totalmarkers=50):
+def findThatAruco(img,markersize=5,totalmarkers=50):
     gray=cv.cvtColor(img,cv.COLOR_BGR2GRAY)
     k=getattr(cv.aruco,f'DICT_{markersize}X{markersize}_{totalmarkers}')
     arucoDict=cv.aruco.Dictionary_get(k)
