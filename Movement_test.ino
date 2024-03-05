@@ -1,6 +1,6 @@
-#define BLYNK_TEMPLATE_ID "TMPL5ELMfSxQz"
-#define BLYNK_TEMPLATE_NAME "Servo with esp8266"
-#define BLYNK_AUTH_TOKEN "iE4BMMTaKI-ACpisHo-Km-fpsihmWLNX"
+#define BLYNK_TEMPLATE_ID "TMPL5cesKbWRF"
+#define BLYNK_TEMPLATE_NAME "Mouvement Foundation"
+#define BLYNK_AUTH_TOKEN "iT3oafW0zhvbXk4Dak_CvZCOePFJ0G_y"
 #define BLYNK_PRINT Serial
 
 #ifndef BlynkSimpleEsp8266_h
@@ -143,7 +143,7 @@ BLYNK_WRITE(V1)
 BLYNK_WRITE(V4)
 {
   int s2 = param.asInt(); 
-  servo2.write(s2);
+  servo3.write(s2);
   Blynk.virtualWrite(V5, s2);
 } 
 
@@ -158,7 +158,7 @@ BLYNK_WRITE(V6)
 void moveControl(int x, int y)
 {
 
-  if(y >= maxRange && x >= minRange && x <= maxRange) //zataci R
+  if(y >= maxRange && x >= minRange && x <= maxRange) 
   {
     digitalWrite(RightMotorDir,HIGH); 
     digitalWrite(LeftMotorDir,HIGH);
@@ -167,7 +167,7 @@ void moveControl(int x, int y)
   }
  
   // move forward right
-  else if(x >= maxRange && y >= maxRange)   //zataci R
+  else if(x >= maxRange && y >= maxRange)   
   {
     digitalWrite(RightMotorDir,HIGH);
     digitalWrite(LeftMotorDir,HIGH);
