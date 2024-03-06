@@ -117,12 +117,7 @@ char auth[] = BLYNK_AUTH_TOKEN;
 char ssid[] = "S10 Arthuuuuur";
 char pass[] = "mgefhyff";
 
-int minRange = 312;
-int maxRange = 712;
-
-int minSpeed = 450;
-int maxSpeed = 1020;
-int noSpeed = 0;
+int dir;
 
 Servo servo1, servo2, servo3;
 
@@ -147,78 +142,58 @@ BLYNK_WRITE(V4)
   Blynk.virtualWrite(V5, s2);
 } 
 
-BLYNK_WRITE(V6)
-{
+//-------------------Control driver motor-------------------
+// останов
+void stop(void) {     
+   analogWrite(5, 0);     
+     analogWrite(4, 0); 
+}  
+// вперед 
+void forward(void) {
+     analogWrite(5, 255); analogWrite(4, 255);
+     digitalWrite(0, HIGH);digitalWrite(2, HIGH); 
+}  
+// назад 
+void backward(void) {
+     analogWrite(5, 255);analogWrite(4, 255);
+     digitalWrite(0, LOW);digitalWrite(2, LOW); 
+}   
+// влево
+void left(void) {
+     analogWrite(5, 255);analogWrite(4, 255);
+     digitalWrite(0, LOW);digitalWrite(2, HIGH);
+}   
+// вправо
+void right(void) {
+     analogWrite(5, 255);analogWrite(4, 255);
+     digitalWrite(0, HIGH); digitalWrite(2, LOW); 
+}   
+//--------------------------------------------------------------
+
+//Two motors controlled with a joystick connected to the virtual pin V2
+BLYNK_WRITE(V6) {
   int x = param[0].asInt();
   int y = param[1].asInt();
-  moveControl(x,y);
+
+       if (x<20) {dir=1;}
+  else if (x>235) {dir=2;}
+  else if (y>235) {dir=3;}
+  else if (y<20) {dir=4;}
+  else if (x>=20 && x<=235 && y>=20 && y<=235) {dir=5;}
+         // выбор для кнопок         
+         switch (dir)   {
+             case 1:  left();
+                  break;             
+             case 2:  right();
+                 break;
+             case 3:  forward();
+                 break;
+             case 4: backward();
+                break;             
+             case 5:  stop(); 
+                break;         } 
+  
 }
-
-//-------------------Control driver motor-------------------
-void moveControl(int x, int y)
-{
-
-  if(y >= maxRange && x >= minRange && x <= maxRange) 
-  {
-    digitalWrite(RightMotorDir,HIGH); 
-    digitalWrite(LeftMotorDir,HIGH);
-    analogWrite(RightMotorSpeed,maxSpeed);
-    analogWrite(LeftMotorSpeed,maxSpeed);
-  }
- 
-  // move forward right
-  else if(x >= maxRange && y >= maxRange)   
-  {
-    digitalWrite(RightMotorDir,HIGH);
-    digitalWrite(LeftMotorDir,HIGH);
-   analogWrite(RightMotorSpeed,minSpeed);
-    analogWrite(LeftMotorSpeed,maxSpeed);
-  }
-
-  // move forward left
-  else if(x <= minRange && y >= maxRange)
-  {
-    digitalWrite(RightMotorDir,HIGH);
-    digitalWrite(LeftMotorDir,HIGH);
-    analogWrite(RightMotorSpeed,maxSpeed);
-    analogWrite(LeftMotorSpeed,minSpeed);
-  }
-
-  // neutral zone
-  else if(y < maxRange && y > minRange && x < maxRange && x > minRange)
-  {
-    analogWrite(RightMotorSpeed,noSpeed);
-    analogWrite(LeftMotorSpeed,noSpeed);
-  }
-
- // move back
-  else if(y <= minRange && x >= minRange && x <= maxRange)
-  {
-    digitalWrite(RightMotorDir,LOW);
-    digitalWrite(LeftMotorDir,LOW);
-   analogWrite(RightMotorSpeed,maxSpeed);
-    analogWrite(LeftMotorSpeed,maxSpeed);
-  }
-
-  // move back and right
- else if(y <= minRange && x <= minRange)
-  {
-   digitalWrite(RightMotorDir,LOW);
-    digitalWrite(LeftMotorDir,LOW);
-    analogWrite(RightMotorSpeed,minSpeed);
-    analogWrite(LeftMotorSpeed,maxSpeed); 
-  }
-
-  // move back and left
-  else if(y <= minRange && x >= maxRange)
-  {
-    digitalWrite(RightMotorDir,LOW);
-    digitalWrite(LeftMotorDir,LOW);
-    analogWrite(RightMotorSpeed,maxSpeed);
-    analogWrite(LeftMotorSpeed,minSpeed);
-  }
-}
-//--------------------------------------------------------------
 
 void setup()
 {
@@ -228,16 +203,11 @@ void setup()
   servo3.attach(D8);
 
   Blynk.begin(auth, ssid, pass);
-  pinMode(RightMotorSpeed, OUTPUT);
-  pinMode(LeftMotorSpeed, OUTPUT);
-  pinMode(RightMotorDir, OUTPUT);
-  pinMode(LeftMotorDir, OUTPUT);
  
-  digitalWrite(RightMotorSpeed, LOW);
-  digitalWrite(LeftMotorSpeed, LOW);
-  digitalWrite(RightMotorDir, HIGH);
-  digitalWrite(LeftMotorDir,HIGH);
- 
+  pinMode(5, OUTPUT); // motor A speed
+  pinMode(4, OUTPUT); // motor B speed
+  pinMode(0, OUTPUT); //  motor A direction
+  pinMode(2, OUTPUT); //  motor B direction
 }
 
 void loop() 
