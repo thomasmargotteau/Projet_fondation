@@ -2,7 +2,9 @@
 #define BLYNK_TEMPLATE_NAME "Mouvement Foundation"
 #define BLYNK_AUTH_TOKEN "iT3oafW0zhvbXk4Dak_CvZCOePFJ0G_y"
 #define BLYNK_PRINT Serial
-
+char auth[] = BLYNK_AUTH_TOKEN;
+char ssid[] = "S10 Arthuuuuur";
+char pass[] = "mgefhyff";
 #ifndef BlynkSimpleEsp8266_h
 #define BlynkSimpleEsp8266_h
 
@@ -113,9 +115,7 @@ public:
 #include <BlynkSimpleEsp8266.h>
 #include <SPI.h>
 
-char auth[] = BLYNK_AUTH_TOKEN;
-char ssid[] = "S10 Arthuuuuur";
-char pass[] = "mgefhyff";
+
 
 int dir;
 
@@ -143,34 +143,54 @@ BLYNK_WRITE(V4)
 } 
 
 //-------------------Control driver motor-------------------
-// останов
 void stop(void) {     
    analogWrite(5, 0);     
      analogWrite(4, 0); 
 }  
-// вперед 
+
 void forward(void) {
      analogWrite(5, 255); analogWrite(4, 255);
      digitalWrite(0, HIGH);digitalWrite(2, HIGH); 
 }  
-// назад 
+
 void backward(void) {
      analogWrite(5, 255);analogWrite(4, 255);
      digitalWrite(0, LOW);digitalWrite(2, LOW); 
 }   
-// влево
+
 void left(void) {
      analogWrite(5, 255);analogWrite(4, 255);
      digitalWrite(0, LOW);digitalWrite(2, HIGH);
 }   
-// вправо
+
 void right(void) {
      analogWrite(5, 255);analogWrite(4, 255);
      digitalWrite(0, HIGH); digitalWrite(2, LOW); 
 }   
+
+void up_right(void) {
+     analogWrite(5, 201);analogWrite(4, 255);
+     digitalWrite(0, HIGH); digitalWrite(2, HIGH); 
+}   
+
+void down_right(void) {
+     analogWrite(5, 201);analogWrite(4, 255);
+     digitalWrite(0, LOW); digitalWrite(2, LOW); 
+}  
+
+void up_left(void) {
+     analogWrite(5, 255);analogWrite(4, 201);
+     digitalWrite(0, HIGH); digitalWrite(2, HIGH); 
+}   
+
+void down_left (void) {
+     analogWrite(5, 255);analogWrite(4, 201);
+     digitalWrite(0, LOW); digitalWrite(2, LOW); 
+}   
+
 //--------------------------------------------------------------
 
-//Two motors controlled with a joystick connected to the virtual pin V2
+//Two motors controlled with a joystick connected to the virtual pin V6
 BLYNK_WRITE(V6) {
   int x = param[0].asInt();
   int y = param[1].asInt();
@@ -179,8 +199,12 @@ BLYNK_WRITE(V6) {
   else if (x>235) {dir=2;}
   else if (y>235) {dir=3;}
   else if (y<20) {dir=4;}
-  else if (x>=20 && x<=235 && y>=20 && y<=235) {dir=5;}
-         // выбор для кнопок         
+  else if (x>=100 && x<=150 && y>=100 && y<=150) {dir=5;}
+  else if (y<235 && y>175 && x>175) {dir=6;}
+  else if (y<20 && y>100 && x> 175) {dir=7;}
+  else if (y<235 && y>175 && x<100) {dir=8;}
+  else if (y<20 && y>100 && x<100) {dir=9;}
+                
          switch (dir)   {
              case 1:  left();
                   break;             
@@ -188,10 +212,19 @@ BLYNK_WRITE(V6) {
                  break;
              case 3:  forward();
                  break;
-             case 4: backward();
+             case 4:  backward();
                 break;             
              case 5:  stop(); 
-                break;         } 
+                break;    
+             case 6:  up_right(); 
+                break;    
+             case 7:  down_right(); 
+                break;  
+             case 8:  up_left(); 
+                break;  
+             case 9:  down_left(); 
+                break;    
+           } 
   
 }
 
