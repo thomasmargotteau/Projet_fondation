@@ -1,0 +1,29 @@
+from PIL import Image, ImageDraw
+
+# Paramètres de l'image
+largeur, hauteur = 1200, 800
+taille_case = 8
+
+# Création de l'image avec un fond blanc
+image = Image.new("RGB", (largeur, hauteur), "white")
+dessin = ImageDraw.Draw(image)
+
+# Dessiner les lignes du quadrillage en gris clair
+for y in range(0, hauteur, taille_case):
+    dessin.line([(0, y), (largeur, y)], fill="lightgray")
+
+for x in range(0, largeur, taille_case):
+    dessin.line([(x, 0), (x, hauteur)], fill="lightgray")
+
+# Colorier une case sur 10 en noir pour visualiser le quadrillage
+for y in range(0, hauteur, taille_case):
+    for x in range(0, largeur, taille_case):
+        # Calcul pour déterminer si la case doit être coloriée (toutes les 10 cases)
+        if ((x // taille_case) + (y // taille_case)) % 10 == 0:
+            dessin.rectangle([x, y, x + taille_case - 1, y + taille_case - 1], fill="black")
+
+# Sauvegarde de l'image pour visualisation
+chemin_image_quadrillage = "/mnt/data/quadrillage_image_avec_quadrillage.png"
+image.save(chemin_image_quadrillage)
+
+# Pour afficher ou utiliser l'image, utilisez le chemin 'chemin_image_quadrillage'
