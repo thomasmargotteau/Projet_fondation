@@ -16,26 +16,26 @@ aruco_dict = aruco.getPredefinedDictionary(aruco.DICT_ARUCO_ORIGINAL)
 parameters = aruco.DetectorParameters()
 detector = aruco.ArucoDetector(aruco_dict, parameters)
 
-nomImages=("Images\CarteVideCote.jpg","Images\CarteVideDessus.jpg","Images\ConfigBlocsAvecArucoCote1.jpg","Images/PhotoCarteTelephone1.jpg","Images\ConfigBlocsAvecArucoCote3.jpg","Images\ConfigBlocsAvecArucoDessusLoin1.jpg","Images\ConfigBlocsAvecArucoDessusLoin2.jpg","Images\ConfigBlocsAvecArucoDessusProche1.jpg","Images\ConfigBlocsAvecArucoDessusProche2.jpg","Images\ConfigBlocsSansAruco1.jpg","Images\ConfigBlocsSansAruco2.jpg")
+nomImages=("Images\CarteVideCote.jpg","Images\PhotoCarteRobot1.jpg","Images\ConfigBlocsAvecArucoCote1.jpg","Images/Transformed_image.jpg","Images\ConfigBlocsAvecArucoCote3.jpg","Images\ConfigBlocsAvecArucoDessusLoin1.jpg","Images\ConfigBlocsAvecArucoDessusLoin2.jpg","Images\ConfigBlocsAvecArucoDessusProche1.jpg","Images\ConfigBlocsAvecArucoDessusProche2.jpg","Images\ConfigBlocsSansAruco1.jpg","Images\ConfigBlocsSansAruco2.jpg")
 nbImages= len(nomImages)
 
 frame=cv2.imread(nomImages[0])
 
-cpt=3
+cpt=0
 
 while True:
     if TEST == 0:
         ret, frame = cap.read()
     elif TEST == 1:
         frame = cv2.imread(nomImages[cpt])
-        frame = cv2.resize(frame, (0, 0), fx=0.7, fy=0.7)
+        frame = cv2.resize(frame, (0, 0), fx=0.3, fy=0.3)
         if cv2.waitKey(1) & 0xFF == ord('p'):
             cpt += 1
             if cpt == nbImages:
                 cpt = 0
     gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 
-    corners, ids, rejectedCandidates = detector.detectMarkers(gray)
+    corners, ids, rejectedCandidates = detector.detectMarkers(frame)
 
     if ids is not None:
         frame = aruco.drawDetectedMarkers(frame, corners, ids)

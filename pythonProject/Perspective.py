@@ -32,7 +32,7 @@ aruco_dict = aruco.getPredefinedDictionary(aruco.DICT_ARUCO_ORIGINAL)
 parameters = aruco.DetectorParameters()
 detector = aruco.ArucoDetector(aruco_dict, parameters)
 
-nomImages = ("Images/PhotoCam2_1.jpg", "Images\ConfigBlocsAvecArucoCote1.jpg", "Images/PhotoCarteTelephone1.jpg",
+nomImages = ("Images/PhotoCam2_1.jpg", "Images\ConfigBlocsAvecArucoCote1.jpg","Images/Transformed_image.jpg", "Images/PhotoCarteTelephone1.jpg",
              "Images\ConfigBlocsAvecArucoCote3.jpg", "Images\ConfigBlocsAvecArucoDessusLoin1.jpg",
              "Images\ConfigBlocsAvecArucoDessusProche1.jpg")
 nbImages = len(nomImages)
@@ -79,23 +79,23 @@ while True:
                 Corner4 = p4
 
         M = calculate_perspective_transform_matrix(Corner1, Corner2, Corner4, Corner3, final_size)
-
+        for i in range(len(ids)):
+            TextOnScreen = "Inconnu"
+            ColorText = (0, 0, 0)
+            if ids[i] == 132:
+                TextOnScreen = "NOUS"
+                ColorText = (0, 255, 255)
+            else:
+                TextOnScreen = None
+            frame = cv2.putText(img=frame, text=TextOnScreen, org=(int(corners[i][0][0][0]), int(corners[i][0][0][1])),
+                                fontFace=cv2.FONT_HERSHEY_PLAIN, fontScale=2.0, color=ColorText, thickness=2)
         # Apply perspective transformation
         dst = cv2.warpPerspective(frame, M, final_size)
 
         # Display the result
         cv2.imshow('Perspective Transformation Result', dst)
 
-        for i in range(len(ids)):
-            TextOnScreen = "Inconnu"
-            ColorText = (0, 0, 0)
-            if ids[i] == 132:
-                TextOnScreen = "NOUS"
-                ColorText = (0, 0, 255)
-            else:
-                TextOnScreen = None
-            frame = cv2.putText(img=frame, text=TextOnScreen, org=(int(corners[i][0][0][0]), int(corners[i][0][0][1])),
-                                fontFace=cv2.FONT_HERSHEY_PLAIN, fontScale=1.0, color=ColorText, thickness=2)
+
 
     if cv2.waitKey(1) & 0xFF == ord('q'):
         break
