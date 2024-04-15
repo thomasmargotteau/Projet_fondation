@@ -65,14 +65,13 @@ nomImages = (
     "Images\PhotoCarteRobot10.jpg",                        #cpt =  8
     "Images\ConfigBlocsAvecArucoCote1.jpg",                #cpt =  9
     "Images\PhotoCarteTelephone5.jpg",                     #cpt =  10
-    "Images\ConfigBlocsAvecArucoCote3.jpg",                #cpt =  11
-    "Images\ConfigBlocsAvecArucoDessusLoin1.jpg",          #cpt =  12
-    "Images\ConfigBlocsAvecArucoDessusProche1.jpg")        #cpt =  13
+    "Images\PhotoCarteRobot11.jpg",                        #cpt =  11
+    "Images\ConfigBlocsAvecArucoDessusLoin1.jpg")          #cpt =  12
 nbImages = len(nomImages)
 
 frame = cv2.imread(nomImages[0])
 
-cpt = 2
+cpt = 11
 
 while True:
     if TEST == 0:
@@ -82,7 +81,7 @@ while True:
         frame = cv2.resize(frame, (0, 0), fx=0.7, fy=0.7)
         if cv2.waitKey(1) & 0xFF == ord('p'):                   # While the code is running press 'p' to go to the next image
             cpt += 1
-            if cpt == nbImages:
+            if cpt == nbImages + 1:
                 cpt = 0
     gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 
@@ -108,16 +107,50 @@ while True:
                 Corner4 = p4
 
         M = calculate_perspective_transform_matrix(Corner1, Corner2, Corner4, Corner3, final_size)
-        hit_img = frame.copy()
-        for i in range(len(ids)):
-            if ids[i] == 132:
-                # Calculate the midpoint between the bottom two corners
-                bottom_midpoint_x = (int(corners[i][0][2][0]) + int(corners[i][0][3][0])) // 2
-                bottom_midpoint_y = (int(corners[i][0][2][1]) + int(corners[i][0][3][1])) // 2
 
+        dst = cv2.warpPerspective(frame, M, final_size)
+
+        RB = 132
+        tailleRB = 70
+        # Saving the images to a file
+        cv2.imwrite("Images\Frame.jpg", frame)
+        cv2.imwrite("Images\Transformed_image.jpg", dst)
+
+        vector_img = cv2.imread("Images\Transformed_image.jpg")
+        # Detect ArUco markers in the image.
+        corners, marker_ids, rejected = detector.detectMarkers(vector_img)
+
+        # If markers are detected, draw them on the image.
+        if marker_ids is not None:
+            # looping through detected markers and marker ids at same time.
+            for corner, marker_id in zip(corners, marker_ids):
+                # Draw the marker corners.
+                if (marker_id[0] == RB):
+                    cv2.polylines(
+                        vector_img, [corner.astype(np.int32)], True, (0, 0, 202), 1, cv2.LINE_AA
+                    )
+
+                # Get the top-right, top-left, bottom-right, and bottom-left corners of the marker.
+                # change the shape of numpy array to 4 by 2
+                corner = corner.reshape(4, 2)
+
+                # change the type of numpy array values integers
+                corner = corner.astype(int)
+
+                # extracting the corner of marker
+                top_left, top_right, bottom_right, bottom_left = corner
+
+                # Calculate the midpoint between the bottom two corners
+                bottom_midpoint_x = (top_right[0] + bottom_right[0]) // 2
+                bottom_midpoint_y = (top_right[1] + bottom_right[1]) // 2
+
+                mid_midpoint_x = (top_right[0] + bottom_left[0]) // 2
+                mid_midpoint_y = (top_right[1] + bottom_left[1]) // 2
+
+                cv2.circle(vector_img, (bottom_midpoint_x, bottom_midpoint_y), 3, (0, 255, 0), -1)
                 # Calculate the direction vector from the bottom two corners
-                direction_vector_x = int(corners[i][0][2][0]) - int(corners[i][0][3][0])
-                direction_vector_y = int(corners[i][0][2][1]) - int(corners[i][0][3][1])
+                direction_vector_x = bottom_midpoint_x - mid_midpoint_x
+                direction_vector_y = bottom_midpoint_y - mid_midpoint_y
 
                 # Normalize the direction vector
                 direction_vector_length = np.sqrt(direction_vector_x ** 2 + direction_vector_y ** 2)
@@ -125,24 +158,49 @@ while True:
                 normalized_direction_vector_y = direction_vector_y / direction_vector_length
 
                 # Move the midpoint 10 pixels in front of the equidistance of the bottom two corners
-                new_center_x = bottom_midpoint_x + int(65 * normalized_direction_vector_x)
-                new_center_y = bottom_midpoint_y + int(65 * normalized_direction_vector_y)
-                # Draw a circle in front of the aruco (New Hitbox)
-                cv2.circle(frame, (new_center_x, new_center_y),
-                           115,
-                           (0, 0, 0), -1)
+                new_center_x = bottom_midpoint_x + int(20 * normalized_direction_vector_x)
+                new_center_y = bottom_midpoint_y + int(20 * normalized_direction_vector_y)
 
-        dst = cv2.warpPerspective(frame, M, final_size)
-        hit_img = cv2.warpPerspective(hit_img, M, final_size)
+                centre = (new_center_x, new_center_y)
 
-        # Saving the images to a file
-        cv2.imwrite("Images\Frame.jpg", frame)
-        cv2.imwrite("Images\Transformed_image.jpg", hit_img)
-        cv2.imwrite("Images\Hitbox.jpg", dst)
+                if (marker_id[0] == RB):
+                    RBCoords = centre
+                    cv2.circle(dst, RBCoords, tailleRB, (0, 0, 0), -1)
+
+                    # Coordonnées des points sur la première ligne
+                    point1 = top_right
+                    point2 = bottom_right
+
+                    # Coordonnées du point de départ pour la deuxième ligne
+                    start_point = centre  # Modifier selon vos besoins
+
+                    # Calculer le vecteur de direction de la ligne
+                    direction_vector = np.array([(point2[0] - point1[0]), (point2[1] - point1[1])])
+
+                    # Normaliser le vecteur de direction
+                    direction_vector = direction_vector / np.linalg.norm(direction_vector)
+
+                    # Taille de la deuxième ligne (vous pouvez ajuster cette valeur)
+                    taille_ligne = 65
+
+                    # Calculer les nouveaux points de fin pour la deuxième ligne
+                    new_point1 = (int(start_point[0]), int(start_point[1]))
+                    new_point2 = (int(start_point[0] + taille_ligne * normalized_direction_vector_x),
+                                  int(start_point[1] + taille_ligne * normalized_direction_vector_y))
+
+                    # Dessiner la deuxième ligne parallèle
+                    cv2.line(vector_img, new_point1, new_point2, (220, 33, 20), 3)
+
+        # Save the image.
+        cv2.imwrite("Images\Transformed_image.jpg", dst)
+        cv2.imwrite("Images\Cache.jpg", vector_img)
+        # Afficher l'image transformée avec bordure
+        cv2.imshow("Cache", vector_img)
+
 
         # Open the image
         image = cv2.imread(
-            "Images/Hitbox.jpg")
+            "Images/Transformed_image.jpg")
 
         # Define the dimensions of the centered rectangle
         crop_width = 1110
@@ -162,13 +220,13 @@ while True:
 
         # Adding a Grid
         square_size = 16  # Size of each square in pixels
-        grid_img = Grid.add_grid(dst, square_size)
+        grid_img = dst.copy()
+        grid_img = Grid.add_grid(grid_img, square_size)
 
         #Displaying different results
-        cv2.imshow('Perspective Transformation Result', hit_img)
         cv2.imshow('Hitbox', dst)
         cv2.imshow('Cropped image', cropped_image)
-        cv2.imshow('Grid', grid_img)
+        '''cv2.imshow('Grid', grid_img)'''
 
         img_copy = dst.copy()
 
@@ -272,6 +330,15 @@ while True:
         cv2.imshow("Red mask", display_red_mask)
         cv2.imshow("Grey mask", display_grey_mask)
         cv2.imshow("White mask", display_white_mask)
+
+        # Superimpose the two masks on the black background
+        superimposed_img = cv2.bitwise_or(red_mask, magenta_mask)
+
+        # Invert the superimposed image to get original colors
+        inverted_img = cv2.bitwise_not(superimposed_img)
+
+        # Display the superimposed image
+        cv2.imshow("Superimposed Image", inverted_img)
     if cv2.waitKey(1) & 0xFF == ord('q'):
         break
 
