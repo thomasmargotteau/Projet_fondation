@@ -3,6 +3,7 @@ import cv2.aruco as aruco
 import numpy as np
 import Grid
 
+
 def calculate_perspective_transform_matrix(Corner1, Corner2, Corner3, Corner4, size):
     # Define the destination points for perspective transformation
     dst_points = np.float32([[0, 0], [size[0], 0], [0, size[1]], [size[0], size[1]]])
@@ -17,7 +18,7 @@ def calculate_perspective_transform_matrix(Corner1, Corner2, Corner3, Corner4, s
 
 
 def get_mean_hsv(image, center):
-    #Get the mean HSV value in a 5 pixel radius circle around a specified center.
+    # Get the mean HSV value in a 5 pixel radius circle around a specified center.
 
     x, y = center
     hsv_image = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
@@ -28,7 +29,7 @@ def get_mean_hsv(image, center):
 
 
 def get_mean_bgr(image, center):
-    #Get the mean BGR value in a 5 pixel radius circle around a specified center.
+    # Get the mean BGR value in a 5 pixel radius circle around a specified center.
 
     x, y = center
     bgr_image = image
@@ -43,7 +44,6 @@ TEST = 1
 
 final_size = (1200, 800)
 
-
 if TEST != 1:
     cap = cv2.VideoCapture(0)
 
@@ -54,19 +54,19 @@ parameters = aruco.DetectorParameters()
 detector = aruco.ArucoDetector(aruco_dict, parameters)
 
 nomImages = (
-    "Images\PhotoCam2_1.jpg",                              #cpt =  0
-    "Images\PhotoCarteRobot5.jpg",                         #cpt =  1
-    "Images\PhotoCarteRobot9.jpg",                         #cpt =  2
-    "Images\PhotoCarteRobot1.jpg",                         #cpt =  3
-    "Images\PhotoCarteRobot2.jpg",                         #cpt =  4
-    "Images\PhotoCarteRobot3.jpg",                         #cpt =  5
-    "Images\PhotoCarteRobot6.jpg",                         #cpt =  6
-    "Images\PhotoCarteRobot8.jpg",                         #cpt =  7
-    "Images\PhotoCarteRobot10.jpg",                        #cpt =  8
-    "Images\ConfigBlocsAvecArucoCote1.jpg",                #cpt =  9
-    "Images\PhotoCarteTelephone5.jpg",                     #cpt =  10
-    "Images\PhotoCarteRobot11.jpg",                        #cpt =  11
-    "Images\ConfigBlocsAvecArucoDessusLoin1.jpg")          #cpt =  12
+    "Images\PhotoCam2_1.jpg",  # cpt =  0
+    "Images\PhotoCarteRobot5.jpg",  # cpt =  1
+    "Images\PhotoCarteRobot9.jpg",  # cpt =  2
+    "Images\PhotoCarteRobot1.jpg",  # cpt =  3
+    "Images\PhotoCarteRobot2.jpg",  # cpt =  4
+    "Images\PhotoCarteRobot3.jpg",  # cpt =  5
+    "Images\PhotoCarteRobot6.jpg",  # cpt =  6
+    "Images\PhotoCarteRobot8.jpg",  # cpt =  7
+    "Images\PhotoCarteRobot10.jpg",  # cpt =  8
+    "Images\ConfigBlocsAvecArucoCote1.jpg",  # cpt =  9
+    "Images\PhotoCarteTelephone5.jpg",  # cpt =  10
+    "Images\PhotoCarteRobot11.jpg",  # cpt =  11
+    "Images\ConfigBlocsAvecArucoDessusLoin1.jpg")  # cpt =  12
 nbImages = len(nomImages)
 
 frame = cv2.imread(nomImages[0])
@@ -79,7 +79,7 @@ while True:
     elif TEST == 1:
         frame = cv2.imread(nomImages[cpt])
         frame = cv2.resize(frame, (0, 0), fx=0.7, fy=0.7)
-        if cv2.waitKey(1) & 0xFF == ord('p'):                   # While the code is running press 'p' to go to the next image
+        if cv2.waitKey(1) & 0xFF == ord('p'):  # While the code is running press 'p' to go to the next image
             cpt += 1
             if cpt == nbImages + 1:
                 cpt = 0
@@ -122,7 +122,7 @@ while True:
 
         # If markers are detected, draw them on the image.
         if marker_ids is not None:
-            # looping through detected markers and marker ids at same time.
+            # Looping through detected markers and marker ids at same time.
             for corner, marker_id in zip(corners, marker_ids):
                 # Draw the marker corners.
                 if (marker_id[0] == RB):
@@ -131,19 +131,20 @@ while True:
                     )
 
                 # Get the top-right, top-left, bottom-right, and bottom-left corners of the marker.
-                # change the shape of numpy array to 4 by 2
+                # Change the shape of numpy array to 4 by 2
                 corner = corner.reshape(4, 2)
 
-                # change the type of numpy array values integers
+                # Change the type of numpy array values integers
                 corner = corner.astype(int)
 
-                # extracting the corner of marker
+                # Extracting corners
                 top_left, top_right, bottom_right, bottom_left = corner
 
                 # Calculate the midpoint between the bottom two corners
                 bottom_midpoint_x = (top_right[0] + bottom_right[0]) // 2
                 bottom_midpoint_y = (top_right[1] + bottom_right[1]) // 2
 
+                # Calculate the center of the Aruco for future vector
                 mid_midpoint_x = (top_right[0] + bottom_left[0]) // 2
                 mid_midpoint_y = (top_right[1] + bottom_left[1]) // 2
 
@@ -167,36 +168,35 @@ while True:
                     RBCoords = centre
                     cv2.circle(dst, RBCoords, tailleRB, (0, 0, 0), -1)
 
-                    # Coordonnées des points sur la première ligne
+                    # Points of the front line
                     point1 = top_right
                     point2 = bottom_right
 
-                    # Coordonnées du point de départ pour la deuxième ligne
-                    start_point = centre  # Modifier selon vos besoins
+                    # Start points for the second line
+                    start_point = centre
 
-                    # Calculer le vecteur de direction de la ligne
+                    # Calculate direction vector
                     direction_vector = np.array([(point2[0] - point1[0]), (point2[1] - point1[1])])
 
-                    # Normaliser le vecteur de direction
+                    # Normalize direction vector
                     direction_vector = direction_vector / np.linalg.norm(direction_vector)
 
-                    # Taille de la deuxième ligne (vous pouvez ajuster cette valeur)
-                    taille_ligne = 65
+                    # Vector Length
+                    taille_ligne = 50
 
-                    # Calculer les nouveaux points de fin pour la deuxième ligne
+                    # Calculate final points for the vector
                     new_point1 = (int(start_point[0]), int(start_point[1]))
                     new_point2 = (int(start_point[0] + taille_ligne * normalized_direction_vector_x),
                                   int(start_point[1] + taille_ligne * normalized_direction_vector_y))
 
-                    # Dessiner la deuxième ligne parallèle
+                    # Draw the second parallel line (vector)
                     cv2.line(vector_img, new_point1, new_point2, (220, 33, 20), 3)
 
         # Save the image.
         cv2.imwrite("Images\Transformed_image.jpg", dst)
         cv2.imwrite("Images\Cache.jpg", vector_img)
-        # Afficher l'image transformée avec bordure
-        cv2.imshow("Cache", vector_img)
 
+        cv2.imshow("Cache", vector_img)
 
         # Open the image
         image = cv2.imread(
@@ -223,7 +223,7 @@ while True:
         grid_img = dst.copy()
         grid_img = Grid.add_grid(grid_img, square_size)
 
-        #Displaying different results
+        # Displaying different results
         cv2.imshow('Hitbox', dst)
         cv2.imshow('Cropped image', cropped_image)
         '''cv2.imshow('Grid', grid_img)'''
@@ -249,7 +249,9 @@ while True:
 
         # Print the mean HSV values
         for i in range(6):
-            '''print(f"Circle {i + 1}: Mean HSV = {mean_hsv_values[i][0]} {mean_hsv_values[i][1]} {mean_hsv_values[i][2]}")'''
+            '''print(f"Circle {i + 1}: Mean HSV = {mean_hsv_values[i][0]} / {mean_hsv_values[i][1]} / {mean_hsv_values[i][2]}")
+            print(f" Grey Circle {i + 1}: Mean BGR = {mean_bgr_values[i][0]} / {mean_bgr_values[i][1]} / {mean_bgr_values[i][2]}")
+            print(f"\n")'''
             # Convert HSV mean values to BGR in order to draw on the frame 'img_copy'
             bgr_color = cv2.cvtColor(
                 np.uint8([[[mean_hsv_values[i][0], mean_hsv_values[i][1], mean_hsv_values[i][2]]]]), cv2.COLOR_HSV2BGR)
@@ -264,7 +266,7 @@ while True:
 
         hsv_img = cv2.cvtColor(cropped_image, cv2.COLOR_BGR2HSV)
         for i in range(6):
-        # Definition of mask boundaries with the previously acquired mean values
+            # Definition of mask boundaries with the previously acquired mean values
             if i == 1:
                 # Blue
                 bound_lower = np.array(
@@ -289,7 +291,6 @@ while True:
                     [0, 0, mean_hsv_values[i][2] + 10])
                 bound_upper = np.array([180, mean_hsv_values[i][2], 255])
                 white_mask = cv2.inRange(hsv_img, bound_lower, bound_upper)
-                '''print(f"mean hsv values : {mean_hsv_values[i][0]}, {mean_hsv_values[i][1]}, {mean_hsv_values[i][2]}")'''
             elif i == 2:
                 # Grey
                 bound_lower = np.array(
@@ -345,5 +346,3 @@ while True:
 if TEST != 1:
     cap.release()
 cv2.destroyAllWindows()
-
-
