@@ -38,6 +38,58 @@ def get_mean_bgr(image, center):
     mean_bgr = cv2.mean(bgr_image, mask=circle_mask)[:3]
     return tuple(map(round, mean_bgr))
 
+def color_boxes_with_masks(grid_img, masks):
+
+    img_with_colored_boxes = grid_img.copy()
+
+    # Define colors for each mask type
+    colors = {
+        'blue': (255, 0, 0),   # Blue color for the blue mask
+        'red': (0, 0, 255),    # Red color for the red mask
+        'grey': (200, 200, 200),  # Grey color for the grey mask
+        'white': (0, 214, 16),  # Pink color for the white mask
+        'black': (0, 0, 0)
+    }
+
+    # Iterate over each grid cell
+    square_size = 16  # Size of each square in pixels
+    for y in range(0, img_with_colored_boxes.shape[0], square_size):
+        for x in range(0, img_with_colored_boxes.shape[1], square_size):
+            # Check if any mask has a non-zero value within the current grid cell
+            mask_color = (255, 255, 255)  # Default color if no mask is present
+            for mask_name, mask in masks.items():
+                if np.any(mask[y:y+square_size, x:x+square_size]):
+                    # If any mask has a non-zero value, color the box with the corresponding color
+                    mask_color = colors[mask_name]
+                    break
+            # Color each box
+            cv2.rectangle(img_with_colored_boxes, (x, y), (x + square_size, y + square_size), mask_color, -1)
+
+    return img_with_colored_boxes
+
+def remove_small_color_groups(img_with_colored_boxes):
+    square_size = 16  # Size of each square in pixels
+
+    # Copy the image
+    img_with_filtered_color_groups = img_with_colored_boxes.copy()
+
+    # Check neighbors and change color to white if less than 3 neighbors of the same color
+    for y in range(square_size, img_with_colored_boxes.shape[0] - square_size, square_size):
+        for x in range(square_size, img_with_colored_boxes.shape[1] - square_size, square_size):
+            current_color = img_with_colored_boxes[y, x]
+
+            # Count number of neighboring boxes with the same color
+            same_color_neighbors = 0
+            for dy in range(-square_size, square_size + 1, square_size):
+                for dx in range(-square_size, square_size + 1, square_size):
+                    if (dy != 0 or dx != 0) and np.all(img_with_colored_boxes[y+dy, x+dx] == current_color):
+                        same_color_neighbors += 1
+
+            # If less than 3 neighbors of the same color, change color to white
+            if same_color_neighbors < 3:
+                cv2.rectangle(img_with_filtered_color_groups, (x, y), (x+square_size, y+square_size), (255, 255, 255), -1)
+
+    return img_with_filtered_color_groups
 
 # 0 for camera, 1 for photos
 TEST = 1
@@ -71,7 +123,7 @@ nbImages = len(nomImages)
 
 frame = cv2.imread(nomImages[0])
 
-cpt = 11
+cpt = 2
 
 while True:
     if TEST == 0:
@@ -111,7 +163,7 @@ while True:
         dst = cv2.warpPerspective(frame, M, final_size)
 
         RB = 132
-        tailleRB = 70
+        tailleRB = 75
         # Saving the images to a file
         cv2.imwrite("Images\Frame.jpg", frame)
         cv2.imwrite("Images\Transformed_image.jpg", dst)
@@ -182,7 +234,7 @@ while True:
                     direction_vector = direction_vector / np.linalg.norm(direction_vector)
 
                     # Vector Length
-                    taille_ligne = 50
+                    taille_ligne = 60
 
                     # Calculate final points for the vector
                     new_point1 = (int(start_point[0]), int(start_point[1]))
@@ -215,18 +267,25 @@ while True:
         # Crop the image
         cropped_image = image[top:bottom, left:right]
 
+        # Draw the zones
+        cv2.rectangle(cropped_image, (224, 605), (309, 690), (0, 0, 255), 3)  # Red zone
+        cv2.rectangle(cropped_image, (806, 21), (883, 106), (255, 0, 0), 3)  # Blue zone
+        cv2.rectangle(cropped_image, (806, 605), (883, 690), (0, 255, 0), 3)  # Green zone
+        cv2.rectangle(cropped_image, (224, 21), (309, 106), (0, 242, 255), 3)  # Yellow zone
+
         # Save the cropped image
         cv2.imwrite("Images/cropped_frame.jpg", cropped_image)
 
         # Adding a Grid
         square_size = 16  # Size of each square in pixels
         grid_img = dst.copy()
+        cv2.rectangle(grid_img, (0, 0), final_size, (255, 255, 255), -1)
         grid_img = Grid.add_grid(grid_img, square_size)
 
         # Displaying different results
         cv2.imshow('Hitbox', dst)
         cv2.imshow('Cropped image', cropped_image)
-        '''cv2.imshow('Grid', grid_img)'''
+        cv2.imshow('Grid', grid_img)
 
         img_copy = dst.copy()
 
@@ -300,7 +359,15 @@ while True:
                 grey_mask = cv2.inRange(cropped_image, bound_lower, bound_upper)
 
         kernel = np.ones((7, 7), np.uint8)
+
+        black_mask = cv2.inRange(cropped_image, (0, 0, 0), (1, 1, 1))
+
         # Definition and displaying of different masks
+        black_mask = cv2.morphologyEx(black_mask, cv2.MORPH_CLOSE, kernel)
+        black_mask = cv2.morphologyEx(black_mask, cv2.MORPH_OPEN, kernel)
+
+        display_black_mask = cv2.bitwise_and(cropped_image, cropped_image, mask=black_mask)
+
         blue_mask = cv2.morphologyEx(blue_mask, cv2.MORPH_CLOSE, kernel)
         blue_mask = cv2.morphologyEx(blue_mask, cv2.MORPH_OPEN, kernel)
 
@@ -325,21 +392,30 @@ while True:
         white_mask = cv2.morphologyEx(white_mask, cv2.MORPH_OPEN, kernel)
 
         display_white_mask = cv2.bitwise_and(cropped_image, cropped_image, mask=white_mask)
+        # Making a new red mask out of magenta and red
+        red_mask = cv2.bitwise_or(magenta_mask, red_mask)
+
+        # Display the blended mask
+        display_red_mask = cv2.bitwise_and(cropped_image, cropped_image, mask=red_mask)
 
         cv2.imshow("Blue mask", display_blue_mask)
-        cv2.imshow("Magenta mask", display_magenta_mask)
         cv2.imshow("Red mask", display_red_mask)
         cv2.imshow("Grey mask", display_grey_mask)
         cv2.imshow("White mask", display_white_mask)
 
-        # Superimpose the two masks on the black background
-        superimposed_img = cv2.bitwise_or(red_mask, magenta_mask)
+        # Combine all masks into a dictionary with mask names as keys
+        all_masks = {
+            'blue': blue_mask,
+            'red': red_mask,
+            'grey': grey_mask,
+            'white': white_mask,
+            'black': black_mask
+        }
 
-        # Invert the superimposed image to get original colors
-        inverted_img = cv2.bitwise_not(superimposed_img)
-
-        # Display the superimposed image
-        cv2.imshow("Superimposed Image", inverted_img)
+        # Apply the function to color the boxes
+        img_with_colored_boxes = color_boxes_with_masks(cropped_image, all_masks)
+        img_with_colored_boxes_corrected = remove_small_color_groups(img_with_colored_boxes)
+        cv2.imshow("Colored grid", img_with_colored_boxes_corrected)
     if cv2.waitKey(1) & 0xFF == ord('q'):
         break
 
