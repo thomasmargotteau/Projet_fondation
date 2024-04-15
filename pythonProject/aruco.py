@@ -2,7 +2,7 @@ import cv2
 import cv2.aruco as aruco
 
 # Mettre à 0 pour camera, 1 pour photos
-TEST=1
+TEST=0
 
 
 # Taille réelle de l'ArUco en millimètres

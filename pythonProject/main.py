@@ -137,12 +137,12 @@ while True:
 
         # Saving the images to a file
         cv2.imwrite("Images\Frame.jpg", frame)
-        cv2.imwrite("Images\Transformed_image.jpg", dst)
-        cv2.imwrite("Images\Hitbox.jpg", hit_img)
+        cv2.imwrite("Images\Transformed_image.jpg", hit_img)
+        cv2.imwrite("Images\Hitbox.jpg", dst)
 
         # Open the image
         image = cv2.imread(
-            "Images/Transformed_image.jpg")
+            "Images/Hitbox.jpg")
 
         # Define the dimensions of the centered rectangle
         crop_width = 1110
@@ -165,17 +165,17 @@ while True:
         grid_img = Grid.add_grid(dst, square_size)
 
         #Displaying different results
-        cv2.imshow('Hitbox', hit_img)
-        cv2.imshow('Perspective Transformation Result', dst)
+        cv2.imshow('Perspective Transformation Result', hit_img)
+        cv2.imshow('Hitbox', dst)
         cv2.imshow('Cropped image', cropped_image)
         cv2.imshow('Grid', grid_img)
 
         img_copy = dst.copy()
 
         # Define the centers of the circles
-        circle_centers = [(103, 797), (140, 797), (175, 797), (215, 797), (250, 797)]
-        circle_centers_grey = [(802, 3), (839, 3), (877, 3), (914, 3), (949, 3)]
-        circle_radius = 10
+        circle_centers = [(103, 797), (140, 797), (175, 797), (215, 797), (250, 797), (760, 3)]
+        circle_centers_grey = [(802, 3), (839, 3), (877, 3), (914, 3), (950, 3), (987, 3)]
+        circle_radius = 15
         # Get the mean HSV values for each circle
         mean_hsv_values = []
         # Get the mean BGR values for each circle
@@ -190,7 +190,7 @@ while True:
             mean_bgr_values.append(mean_bgr)
 
         # Print the mean HSV values
-        for i in range(5):
+        for i in range(6):
             '''print(f"Circle {i + 1}: Mean HSV = {mean_hsv_values[i][0]} {mean_hsv_values[i][1]} {mean_hsv_values[i][2]}")'''
             # Convert HSV mean values to BGR in order to draw on the frame 'img_copy'
             bgr_color = cv2.cvtColor(
@@ -205,7 +205,7 @@ while True:
         cv2.imshow("Color calibration", img_copy)
 
         hsv_img = cv2.cvtColor(cropped_image, cv2.COLOR_BGR2HSV)
-        for i in range(5):
+        for i in range(6):
         # Definition of mask boundaries with the previously acquired mean values
             if i == 1:
                 # Blue
@@ -216,15 +216,22 @@ while True:
             elif i == 3:
                 # Magenta
                 bound_lower = np.array(
-                    [mean_hsv_values[i][0] - 8, mean_hsv_values[i][1] - 100, mean_hsv_values[i][2] - 100])
+                    [mean_hsv_values[i][0] - 8, mean_hsv_values[i][1] - 100, 0])
                 bound_upper = np.array([mean_hsv_values[i][0] + 8, 255, 255])
                 magenta_mask = cv2.inRange(hsv_img, bound_lower, bound_upper)
             elif i == 4:
                 # Red
                 bound_lower = np.array(
-                    [mean_hsv_values[i][0] - 20, mean_hsv_values[i][1] - 100, mean_hsv_values[i][2] - 100])
+                    [mean_hsv_values[i][0] - 20, mean_hsv_values[i][1] - 100, 0])
                 bound_upper = np.array([mean_hsv_values[i][0], 255, 255])
                 red_mask = cv2.inRange(hsv_img, bound_lower, bound_upper)
+            elif i == 5:
+                # White
+                bound_lower = np.array(
+                    [0, 0, mean_hsv_values[i][2] + 10])
+                bound_upper = np.array([180, mean_hsv_values[i][2], 255])
+                white_mask = cv2.inRange(hsv_img, bound_lower, bound_upper)
+                '''print(f"mean hsv values : {mean_hsv_values[i][0]}, {mean_hsv_values[i][1]}, {mean_hsv_values[i][2]}")'''
             elif i == 2:
                 # Grey
                 bound_lower = np.array(
@@ -255,10 +262,16 @@ while True:
 
         display_grey_mask = cv2.bitwise_and(cropped_image, cropped_image, mask=grey_mask)
 
+        white_mask = cv2.morphologyEx(white_mask, cv2.MORPH_CLOSE, kernel)
+        white_mask = cv2.morphologyEx(white_mask, cv2.MORPH_OPEN, kernel)
+
+        display_white_mask = cv2.bitwise_and(cropped_image, cropped_image, mask=white_mask)
+
         cv2.imshow("Blue mask", display_blue_mask)
         cv2.imshow("Magenta mask", display_magenta_mask)
         cv2.imshow("Red mask", display_red_mask)
         cv2.imshow("Grey mask", display_grey_mask)
+        cv2.imshow("White mask", display_white_mask)
     if cv2.waitKey(1) & 0xFF == ord('q'):
         break
 

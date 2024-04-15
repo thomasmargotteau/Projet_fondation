@@ -17,7 +17,7 @@ def calculate_perspective_transform_matrix(Corner1, Corner2, Corner3, Corner4, s
 
 
 def get_mean_hsv(image, center):
-    #Get the mean HSV value in a 5 pixel radius circle around a specified center.
+    # Get the mean HSV value in a 5 pixel radius circle around a specified center.
 
     x, y = center
     hsv_image = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
@@ -28,7 +28,7 @@ def get_mean_hsv(image, center):
 
 
 def get_mean_bgr(image, center):
-    #Get the mean BGR value in a 5 pixel radius circle around a specified center.
+    # Get the mean BGR value in a 5 pixel radius circle around a specified center.
 
     x, y = center
     bgr_image = image
@@ -43,7 +43,6 @@ TEST = 1
 
 final_size = (1200, 800)
 
-
 if TEST != 1:
     cap = cv2.VideoCapture(0)
 
@@ -54,20 +53,20 @@ parameters = aruco.DetectorParameters()
 detector = aruco.ArucoDetector(aruco_dict, parameters)
 
 nomImages = (
-    "Images\PhotoCam2_1.jpg",                              #cpt =  0
-    "Images\PhotoCarteRobot5.jpg",                         #cpt =  1
-    "Images\PhotoCarteRobot9.jpg",                         #cpt =  2
-    "Images\PhotoCarteRobot1.jpg",                         #cpt =  3
-    "Images\PhotoCarteRobot2.jpg",                         #cpt =  4
-    "Images\PhotoCarteRobot3.jpg",                         #cpt =  5
-    "Images\PhotoCarteRobot6.jpg",                         #cpt =  6
-    "Images\PhotoCarteRobot8.jpg",                         #cpt =  7
-    "Images\PhotoCarteRobot10.jpg",                        #cpt =  8
-    "Images\ConfigBlocsAvecArucoCote1.jpg",                #cpt =  9
-    "Images\PhotoCarteTelephone5.jpg",                     #cpt =  10
-    "Images\ConfigBlocsAvecArucoCote3.jpg",                #cpt =  11
-    "Images\ConfigBlocsAvecArucoDessusLoin1.jpg",          #cpt =  12
-    "Images\ConfigBlocsAvecArucoDessusProche1.jpg")        #cpt =  13
+    "Images\PhotoCam2_1.jpg",  # cpt =  0
+    "Images\PhotoCarteRobot5.jpg",  # cpt =  1
+    "Images\PhotoCarteRobot9.jpg",  # cpt =  2
+    "Images\PhotoCarteRobot1.jpg",  # cpt =  3
+    "Images\PhotoCarteRobot2.jpg",  # cpt =  4
+    "Images\PhotoCarteRobot3.jpg",  # cpt =  5
+    "Images\PhotoCarteRobot6.jpg",  # cpt =  6
+    "Images\PhotoCarteRobot8.jpg",  # cpt =  7
+    "Images\PhotoCarteRobot10.jpg",  # cpt =  8
+    "Images\ConfigBlocsAvecArucoCote1.jpg",  # cpt =  9
+    "Images\PhotoCarteTelephone5.jpg",  # cpt =  10
+    "Images\ConfigBlocsAvecArucoCote3.jpg",  # cpt =  11
+    "Images\ConfigBlocsAvecArucoDessusLoin1.jpg",  # cpt =  12
+    "Images\ConfigBlocsAvecArucoDessusProche1.jpg")  # cpt =  13
 nbImages = len(nomImages)
 
 frame = cv2.imread(nomImages[0])
@@ -80,7 +79,7 @@ while True:
     elif TEST == 1:
         frame = cv2.imread(nomImages[cpt])
         frame = cv2.resize(frame, (0, 0), fx=0.7, fy=0.7)
-        if cv2.waitKey(1) & 0xFF == ord('p'):                   # While the code is running press 'p' to go to the next image
+        if cv2.waitKey(1) & 0xFF == ord('p'):  # While the code is running press 'p' to go to the next image
             cpt += 1
             if cpt == nbImages:
                 cpt = 0
@@ -137,12 +136,12 @@ while True:
 
         # Saving the images to a file
         cv2.imwrite("Images\Frame.jpg", frame)
-        cv2.imwrite("Images\Transformed_image.jpg", dst)
-        cv2.imwrite("Images\Hitbox.jpg", hit_img)
+        cv2.imwrite("Images\Transformed_image.jpg", hit_img)
+        cv2.imwrite("Images\Hitbox.jpg", dst)
 
         # Open the image
         image = cv2.imread(
-            "Images/Transformed_image.jpg")
+            "Images/Hitbox.jpg")
 
         # Define the dimensions of the centered rectangle
         crop_width = 1110
@@ -160,17 +159,17 @@ while True:
         # Save the cropped image
         cv2.imwrite("Images/cropped_frame.jpg", cropped_image)
 
-        #Displaying different results
-        cv2.imshow('Hitbox', hit_img)
-        cv2.imshow('Perspective Transformation Result', dst)
+        # Displaying different results
+        cv2.imshow('Perspective Transformation Result', hit_img)
+        cv2.imshow('Hitbox', dst)
         cv2.imshow('Cropped image', cropped_image)
 
         img_copy = dst.copy()
 
         # Define the centers of the circles
-        circle_centers = [(103, 797), (140, 797), (175, 797), (215, 797), (250, 797)]
-        circle_centers_grey = [(802, 3), (839, 3), (877, 3), (914, 3), (949, 3)]
-        circle_radius = 10
+        circle_centers = [(103, 797), (140, 797), (175, 797), (215, 797), (250, 797), (760, 3)]
+        circle_centers_grey = [(802, 3), (839, 3), (877, 3), (914, 3), (950, 3), (987, 3)]
+        circle_radius = 15
         # Get the mean HSV values for each circle
         mean_hsv_values = []
         # Get the mean BGR values for each circle
@@ -185,7 +184,7 @@ while True:
             mean_bgr_values.append(mean_bgr)
 
         # Print the mean HSV values
-        for i in range(5):
+        for i in range(6):
             '''print(f"Circle {i + 1}: Mean HSV = {mean_hsv_values[i][0]} {mean_hsv_values[i][1]} {mean_hsv_values[i][2]}")'''
             # Convert HSV mean values to BGR in order to draw on the frame 'img_copy'
             bgr_color = cv2.cvtColor(
@@ -200,8 +199,8 @@ while True:
         cv2.imshow("Color calibration", img_copy)
 
         hsv_img = cv2.cvtColor(cropped_image, cv2.COLOR_BGR2HSV)
-        for i in range(5):
-        # Definition of mask boundaries with the previously acquired mean values
+        for i in range(6):
+            # Definition of mask boundaries with the previously acquired mean values
             if i == 1:
                 # Blue
                 bound_lower = np.array(
@@ -217,9 +216,16 @@ while True:
             elif i == 4:
                 # Red
                 bound_lower = np.array(
-                    [mean_hsv_values[i][0] - 20, mean_hsv_values[i][1] - 100, mean_hsv_values[i][2] - 100])
+                    [mean_hsv_values[i][0] - 20, mean_hsv_values[i][1] - 100, 0])
                 bound_upper = np.array([mean_hsv_values[i][0], 255, 255])
                 red_mask = cv2.inRange(hsv_img, bound_lower, bound_upper)
+            elif i == 5:
+                # White
+                bound_lower = np.array(
+                    [0, 0, mean_hsv_values[i][2] + 10])
+                bound_upper = np.array([180, mean_hsv_values[i][2], 255])
+                white_mask = cv2.inRange(hsv_img, bound_lower, bound_upper)
+                print(f"mean hsv values : {mean_hsv_values[i][0]}, {mean_hsv_values[i][1]}, {mean_hsv_values[i][2]}")
             elif i == 2:
                 # Grey
                 bound_lower = np.array(
@@ -227,6 +233,7 @@ while True:
                 bound_upper = np.array(
                     [mean_bgr_values[3][0], mean_bgr_values[3][1], mean_bgr_values[3][1]])
                 grey_mask = cv2.inRange(cropped_image, bound_lower, bound_upper)
+
 
         kernel = np.ones((7, 7), np.uint8)
         # Definition and displaying of different masks
@@ -250,10 +257,16 @@ while True:
 
         display_grey_mask = cv2.bitwise_and(cropped_image, cropped_image, mask=grey_mask)
 
+        white_mask = cv2.morphologyEx(white_mask, cv2.MORPH_CLOSE, kernel)
+        white_mask = cv2.morphologyEx(white_mask, cv2.MORPH_OPEN, kernel)
+
+        display_white_mask = cv2.bitwise_and(cropped_image, cropped_image, mask=white_mask)
+
         cv2.imshow("Blue mask", display_blue_mask)
         cv2.imshow("Magenta mask", display_magenta_mask)
         cv2.imshow("Red mask", display_red_mask)
         cv2.imshow("Grey mask", display_grey_mask)
+        cv2.imshow("White mask", display_white_mask)
     if cv2.waitKey(1) & 0xFF == ord('q'):
         break
 
