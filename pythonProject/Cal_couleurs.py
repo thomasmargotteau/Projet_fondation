@@ -72,7 +72,7 @@ nbImages = len(nomImages)
 
 frame = cv2.imread(nomImages[0])
 
-cpt = 5
+cpt = 2
 
 while True:
     if TEST == 0:
@@ -205,8 +205,8 @@ while True:
             if i == 1:
                 # Blue
                 bound_lower = np.array(
-                    [mean_hsv_values[i][0] - 8, mean_hsv_values[i][1] - 10, mean_hsv_values[i][2] - 10])
-                bound_upper = np.array([mean_hsv_values[i][0] + 8, 255, 190])
+                    [mean_hsv_values[i][0] - 8, mean_hsv_values[i][1] - 15, mean_hsv_values[i][2] - 10])
+                bound_upper = np.array([mean_hsv_values[i][0] + 8, 255, 210])
                 blue_mask = cv2.inRange(hsv_img, bound_lower, bound_upper)
             elif i == 3:
                 # Magenta
@@ -223,9 +223,9 @@ while True:
             elif i == 2:
                 # Grey
                 bound_lower = np.array(
-                    [mean_bgr_values[0][0] - 50, mean_bgr_values[0][1] - 50, mean_bgr_values[0][2] - 50])
+                    [mean_bgr_values[0][0] - 45, mean_bgr_values[0][1] - 45, mean_bgr_values[0][2] - 45])
                 bound_upper = np.array(
-                    [mean_hsv_values[3][0], mean_bgr_values[3][1], mean_bgr_values[3][1]])
+                    [mean_bgr_values[3][0], mean_bgr_values[3][1], mean_bgr_values[3][1]])
                 grey_mask = cv2.inRange(cropped_image, bound_lower, bound_upper)
 
         kernel = np.ones((7, 7), np.uint8)
