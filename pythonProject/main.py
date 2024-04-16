@@ -38,21 +38,28 @@ def get_mean_bgr(image, center):
     mean_bgr = cv2.mean(bgr_image, mask=circle_mask)[:3]
     return tuple(map(round, mean_bgr))
 
+# Function to draw a 20x20 square centered at a given point with a specified color
+def draw_square(img, center, color):
+    half_size = 18
+    top_left = (center[0] - half_size, center[1] - half_size)
+    bottom_right = (center[0] + half_size, center[1] + half_size)
+    cv2.rectangle(img, top_left, bottom_right, color, -1)
+
 def color_boxes_with_masks(grid_img, masks):
 
     img_with_colored_boxes = grid_img.copy()
 
     # Define colors for each mask type
     colors = {
-        'blue': (255, 0, 0),   # Blue color for the blue mask
-        'red': (0, 0, 255),    # Red color for the red mask
-        'grey': (200, 200, 200),  # Grey color for the grey mask
-        'white': (0, 214, 16),  # Pink color for the white mask
+        'blue': (255, 0, 0),
+        'red': (0, 0, 255),
+        'grey': (100, 100, 100),
+        'white': (145, 5, 83),
         'black': (0, 0, 0)
     }
 
     # Iterate over each grid cell
-    square_size = 16  # Size of each square in pixels
+    square_size = 10  # Size of each square in pixels
     for y in range(0, img_with_colored_boxes.shape[0], square_size):
         for x in range(0, img_with_colored_boxes.shape[1], square_size):
             # Check if any mask has a non-zero value within the current grid cell
@@ -68,7 +75,7 @@ def color_boxes_with_masks(grid_img, masks):
     return img_with_colored_boxes
 
 def remove_small_color_groups(img_with_colored_boxes):
-    square_size = 16  # Size of each square in pixels
+    square_size = 10  # Size of each square in pixels
 
     # Copy the image
     img_with_filtered_color_groups = img_with_colored_boxes.copy()
@@ -86,7 +93,7 @@ def remove_small_color_groups(img_with_colored_boxes):
                         same_color_neighbors += 1
 
             # If less than 3 neighbors of the same color, change color to white
-            if same_color_neighbors < 3:
+            if same_color_neighbors < 5:
                 cv2.rectangle(img_with_filtered_color_groups, (x, y), (x+square_size, y+square_size), (255, 255, 255), -1)
 
     return img_with_filtered_color_groups
@@ -122,6 +129,13 @@ nomImages = (
 nbImages = len(nomImages)
 
 frame = cv2.imread(nomImages[0])
+# Define the rectangles
+rectangles = [
+    ((224, 605), (309, 690), (1, 37, 255)),   # Red zone
+    ((806, 21), (883, 106), (255, 88, 2)),   # Blue zone
+    ((806, 605), (883, 690), (23, 143, 26)),  # Green zone
+    ((224, 21), (309, 106), (167, 3, 255))  # Yellow zone
+]
 
 cpt = 2
 
@@ -277,7 +291,7 @@ while True:
         cv2.imwrite("Images/cropped_frame.jpg", cropped_image)
 
         # Adding a Grid
-        square_size = 16  # Size of each square in pixels
+        square_size = 10  # Size of each square in pixels
         grid_img = dst.copy()
         cv2.rectangle(grid_img, (0, 0), final_size, (255, 255, 255), -1)
         grid_img = Grid.add_grid(grid_img, square_size)
@@ -415,6 +429,19 @@ while True:
         # Apply the function to color the boxes
         img_with_colored_boxes = color_boxes_with_masks(cropped_image, all_masks)
         img_with_colored_boxes_corrected = remove_small_color_groups(img_with_colored_boxes)
+        img_with_colored_boxes_corrected = Grid.add_grid(img_with_colored_boxes_corrected, square_size)
+        for rectangle in rectangles:
+            # Extract rectangle coordinates and color
+            (x1, y1), (x2, y2), color = rectangle
+
+            # Calculate the center of the rectangle
+            center_x = (x1 + x2) // 2
+            center_y = (y1 + y2) // 2
+            center = (center_x, center_y)
+
+            # Draw a 20x20 square centered at the calculated center with the same color
+            draw_square(img_with_colored_boxes_corrected, center, color)
+
         cv2.imshow("Colored grid", img_with_colored_boxes_corrected)
     if cv2.waitKey(1) & 0xFF == ord('q'):
         break
