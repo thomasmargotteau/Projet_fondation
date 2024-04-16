@@ -1,0 +1,23 @@
+Efficiency: JPS is highly efficient, especially on grid-based maps with obstacles. It exploits the grid structure to skip large sections of the search space by identifying jump points, significantly reducing the number of nodes that need to be explored.
+
+Grid-based Maps: Since your map consists of a grid, JPS is particularly well-suited for this scenario. It leverages the grid structure to efficiently search for the optimal path without exploring unnecessary nodes.
+
+Avoiding Obstacles: JPS inherently avoids obstacles by only exploring paths that lead in directions conducive to reaching the goal. This means the robot will navigate around obstacles without explicitly checking every adjacent cell.
+
+Optimality: JPS guarantees optimality when used with heuristics like Manhattan distance, ensuring that the robot will find the shortest path from point A to point B and back.
+
+Speed: Due to its efficiency in skipping unnecessary nodes, JPS can provide fast pathfinding even on relatively large grids like yours (120x80).
+
+Use of the Manhattan distance for the euristic
+Yes, Jump Point Search (JPS) is capable of accounting for diagonal movement in grid-based maps. While JPS primarily focuses on reducing the number of nodes expanded during search by identifying jump points along straight lines, it still supports diagonal movement when applicable.
+
+In grid-based environments, diagonal movement is often allowed when there are no obstacles blocking the diagonal path between two adjacent cells. JPS considers diagonal movement by identifying diagonal jump points, which are positions where the path can jump diagonally across empty spaces without hitting obstacles.
+
+When searching for paths using JPS, the algorithm explores both horizontal/vertical and diagonal directions, identifying jump points in each direction as it traverses the grid. By doing so, JPS can efficiently explore all possible paths, including those that involve diagonal movement, while still taking advantage of its ability to skip over large sections of the search space.
+
+Overall, JPS is capable of handling diagonal movement in grid-based maps and can efficiently find optimal paths while considering both horizontal/vertical and diagonal directions.
+
+
+
+
+

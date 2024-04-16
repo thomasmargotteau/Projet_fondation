@@ -225,14 +225,14 @@ while True:
                 normalized_direction_vector_y = direction_vector_y / direction_vector_length
 
                 # Move the midpoint 10 pixels in front of the equidistance of the bottom two corners
-                new_center_x = bottom_midpoint_x + int(20 * normalized_direction_vector_x)
-                new_center_y = bottom_midpoint_y + int(20 * normalized_direction_vector_y)
+                new_center_x = bottom_midpoint_x + int(25 * normalized_direction_vector_x)
+                new_center_y = bottom_midpoint_y + int(25 * normalized_direction_vector_y)
 
                 centre = (new_center_x, new_center_y)
 
                 if (marker_id[0] == RB):
                     RBCoords = centre
-                    cv2.circle(dst, RBCoords, tailleRB, (0, 0, 0), -1)
+                    '''cv2.circle(dst, RBCoords, tailleRB, (0, 0, 0), -1)'''
 
                     # Points of the front line
                     point1 = top_right
@@ -257,6 +257,14 @@ while True:
 
                     # Draw the second parallel line (vector)
                     cv2.line(vector_img, new_point1, new_point2, (220, 33, 20), 3)
+                    # Draw the rectangle oriented by the vector
+                    rectangle_width = 110
+                    rectangle_height = 130
+                    angle = np.arctan2(direction_vector[1], direction_vector[0]) * 180 / np.pi
+                    center = (int(RBCoords[0]), int(RBCoords[1]))
+                    rectangle_points = cv2.boxPoints(((center), (rectangle_width, rectangle_height), angle))
+                    cv2.drawContours(dst, [np.int0(rectangle_points)], 0, (0, 0, 0), -1)
+                    cv2.drawContours(vector_img, [np.int0(rectangle_points)], 0, (220, 33, 20), 3)
 
         # Save the image.
         cv2.imwrite("Images\Transformed_image.jpg", dst)
