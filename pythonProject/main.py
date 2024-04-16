@@ -93,7 +93,7 @@ def remove_small_color_groups(img_with_colored_boxes):
                         same_color_neighbors += 1
 
             # If less than 3 neighbors of the same color, change color to white
-            if same_color_neighbors < 5:
+            if same_color_neighbors < 2:
                 cv2.rectangle(img_with_filtered_color_groups, (x, y), (x+square_size, y+square_size), (255, 255, 255), -1)
 
     return img_with_filtered_color_groups
@@ -367,13 +367,13 @@ while True:
             elif i == 2:
                 # Grey
                 bound_lower = np.array(
-                    [mean_bgr_values[0][0] - 45, mean_bgr_values[0][1] - 45, mean_bgr_values[0][2] - 45])
+                    [mean_bgr_values[0][0] - 15, mean_bgr_values[0][1] - 15, mean_bgr_values[0][2] - 15])
                 bound_upper = np.array(
-                    [mean_bgr_values[3][0], mean_bgr_values[3][1], mean_bgr_values[3][1]])
+                    [mean_bgr_values[3][0] - 5, mean_bgr_values[3][1]- 5, mean_bgr_values[3][1] - 5])
                 grey_mask = cv2.inRange(cropped_image, bound_lower, bound_upper)
 
-        kernel = np.ones((7, 7), np.uint8)
-
+        kernel = np.ones((14, 14), np.uint8)
+        grey_kernel = np.ones((17, 17), np.uint8)
         black_mask = cv2.inRange(cropped_image, (0, 0, 0), (1, 1, 1))
 
         # Definition and displaying of different masks
@@ -397,8 +397,8 @@ while True:
 
         display_red_mask = cv2.bitwise_and(cropped_image, cropped_image, mask=red_mask)
 
-        grey_mask = cv2.morphologyEx(grey_mask, cv2.MORPH_CLOSE, kernel)
-        grey_mask = cv2.morphologyEx(grey_mask, cv2.MORPH_OPEN, kernel)
+        grey_mask = cv2.morphologyEx(grey_mask, cv2.MORPH_CLOSE, grey_kernel)
+        grey_mask = cv2.morphologyEx(grey_mask, cv2.MORPH_OPEN, grey_kernel)
 
         display_grey_mask = cv2.bitwise_and(cropped_image, cropped_image, mask=grey_mask)
 
