@@ -2,6 +2,7 @@ import cv2
 import cv2.aruco as aruco
 import numpy as np
 import Grid
+import JPS_Pathfinding
 
 
 def calculate_perspective_transform_matrix(Corner1, Corner2, Corner3, Corner4, size):
@@ -38,65 +39,6 @@ def get_mean_bgr(image, center):
     mean_bgr = cv2.mean(bgr_image, mask=circle_mask)[:3]
     return tuple(map(round, mean_bgr))
 
-# Function to draw a 20x20 square centered at a given point with a specified color
-def draw_square(img, center, color):
-    half_size = 18
-    top_left = (center[0] - half_size, center[1] - half_size)
-    bottom_right = (center[0] + half_size, center[1] + half_size)
-    cv2.rectangle(img, top_left, bottom_right, color, -1)
-
-def color_boxes_with_masks(grid_img, masks):
-
-    img_with_colored_boxes = grid_img.copy()
-
-    # Define colors for each mask type
-    colors = {
-        'blue': (255, 0, 0),
-        'red': (0, 0, 255),
-        'grey': (100, 100, 100),
-        'white': (145, 5, 83),
-        'black': (0, 0, 0)
-    }
-
-    # Iterate over each grid cell
-    square_size = 10  # Size of each square in pixels
-    for y in range(0, img_with_colored_boxes.shape[0], square_size):
-        for x in range(0, img_with_colored_boxes.shape[1], square_size):
-            # Check if any mask has a non-zero value within the current grid cell
-            mask_color = (255, 255, 255)  # Default color if no mask is present
-            for mask_name, mask in masks.items():
-                if np.any(mask[y:y+square_size, x:x+square_size]):
-                    # If any mask has a non-zero value, color the box with the corresponding color
-                    mask_color = colors[mask_name]
-                    break
-            # Color each box
-            cv2.rectangle(img_with_colored_boxes, (x, y), (x + square_size, y + square_size), mask_color, -1)
-
-    return img_with_colored_boxes
-
-def remove_small_color_groups(img_with_colored_boxes):
-    square_size = 10  # Size of each square in pixels
-
-    # Copy the image
-    img_with_filtered_color_groups = img_with_colored_boxes.copy()
-
-    # Check neighbors and change color to white if less than 3 neighbors of the same color
-    for y in range(square_size, img_with_colored_boxes.shape[0] - square_size, square_size):
-        for x in range(square_size, img_with_colored_boxes.shape[1] - square_size, square_size):
-            current_color = img_with_colored_boxes[y, x]
-
-            # Count number of neighboring boxes with the same color
-            same_color_neighbors = 0
-            for dy in range(-square_size, square_size + 1, square_size):
-                for dx in range(-square_size, square_size + 1, square_size):
-                    if (dy != 0 or dx != 0) and np.all(img_with_colored_boxes[y+dy, x+dx] == current_color):
-                        same_color_neighbors += 1
-
-            # If less than 3 neighbors of the same color, change color to white
-            if same_color_neighbors < 2:
-                cv2.rectangle(img_with_filtered_color_groups, (x, y), (x+square_size, y+square_size), (255, 255, 255), -1)
-
-    return img_with_filtered_color_groups
 
 # 0 for camera, 1 for photos
 TEST = 1
@@ -263,8 +205,8 @@ while True:
                     angle = np.arctan2(direction_vector[1], direction_vector[0]) * 180 / np.pi
                     center = (int(RBCoords[0]), int(RBCoords[1]))
                     rectangle_points = cv2.boxPoints(((center), (rectangle_width, rectangle_height), angle))
-                    cv2.drawContours(dst, [np.int0(rectangle_points)], 0, (0, 0, 0), -1)
-                    cv2.drawContours(vector_img, [np.int0(rectangle_points)], 0, (220, 33, 20), 3)
+                    cv2.drawContours(dst, [np.intp(rectangle_points)], 0, (0, 0, 0), -1)
+                    cv2.drawContours(vector_img, [np.intp(rectangle_points)], 0, (220, 33, 20), 3)
 
         # Save the image.
         cv2.imwrite("Images\Transformed_image.jpg", dst)
@@ -301,13 +243,18 @@ while True:
         # Adding a Grid
         square_size = 10  # Size of each square in pixels
         grid_img = dst.copy()
-        cv2.rectangle(grid_img, (0, 0), final_size, (255, 255, 255), -1)
+
         grid_img = Grid.add_grid(grid_img, square_size)
 
         # Displaying different results
-        cv2.imshow('Hitbox', dst)
-        cv2.imshow('Cropped image', cropped_image)
+        '''cv2.imshow('Hitbox', dst)
         cv2.imshow('Grid', grid_img)
+        cv2.rectangle(grid_img, (0, 0), final_size, (255, 255, 255), -1)
+        grid_img = Grid.add_grid(grid_img, square_size)
+        cv2.imshow('Grid', grid_img)'''
+
+        cv2.imshow('Cropped image', cropped_image)
+
 
         img_copy = dst.copy()
 
@@ -420,10 +367,10 @@ while True:
         # Display the blended mask
         display_red_mask = cv2.bitwise_and(cropped_image, cropped_image, mask=red_mask)
 
-        cv2.imshow("Blue mask", display_blue_mask)
+        '''cv2.imshow("Blue mask", display_blue_mask)
         cv2.imshow("Red mask", display_red_mask)
         cv2.imshow("Grey mask", display_grey_mask)
-        cv2.imshow("White mask", display_white_mask)
+        cv2.imshow("White mask", display_white_mask)'''
 
         # Combine all masks into a dictionary with mask names as keys
         all_masks = {
@@ -435,22 +382,26 @@ while True:
         }
 
         # Apply the function to color the boxes
-        img_with_colored_boxes = color_boxes_with_masks(cropped_image, all_masks)
-        img_with_colored_boxes_corrected = remove_small_color_groups(img_with_colored_boxes)
+        img_with_colored_boxes, grid = Grid.color_boxes_with_masks(cropped_image, all_masks)
+        img_with_colored_boxes_corrected = Grid.remove_small_color_groups(img_with_colored_boxes)
         img_with_colored_boxes_corrected = Grid.add_grid(img_with_colored_boxes_corrected, square_size)
-        for rectangle in rectangles:
-            # Extract rectangle coordinates and color
-            (x1, y1), (x2, y2), color = rectangle
+        cv2.imshow('Colored Grid', img_with_colored_boxes_corrected)
+        # Draw numbers on the image representing grid values
+        font = cv2.FONT_HERSHEY_SIMPLEX
+        font_scale = 0.4
+        font_thickness = 1
+        text_color = (0, 0, 0)  # White text color
 
-            # Calculate the center of the rectangle
-            center_x = (x1 + x2) // 2
-            center_y = (y1 + y2) // 2
-            center = (center_x, center_y)
+        for y in range(grid.shape[0]):
+            for x in range(grid.shape[1]):
+                # Determine text position
+                text_pos = (x * 10 + 2, y * 10 + 9)
+                # Draw text on the image
+                cv2.putText(img_with_colored_boxes_corrected, str(grid[y, x]), text_pos, font, font_scale, text_color, font_thickness)
 
-            # Draw a 20x20 square centered at the calculated center with the same color
-            draw_square(img_with_colored_boxes_corrected, center, color)
+        # Display or save the image with numbers
+        cv2.imshow('Grid with Numbers', img_with_colored_boxes_corrected)
 
-        cv2.imshow("Colored grid", img_with_colored_boxes_corrected)
     if cv2.waitKey(1) & 0xFF == ord('q'):
         break
 
