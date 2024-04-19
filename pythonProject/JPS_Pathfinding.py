@@ -155,8 +155,8 @@ def draw_path(image, path, square_size):
     # Loop through each point in the path
     for i in range(len(path) - 1):
         # Calculate the coordinates of the current and next points in the path
-        current_point = (path[i][1] * square_size + square_size // 2, path[i][0] * square_size + square_size // 2)
-        next_point = (path[i + 1][1] * square_size + square_size // 2, path[i + 1][0] * square_size + square_size // 2)
+        current_point = (path[i][1] * square_size - square_size // 2, path[i][0] * square_size - square_size // 2)
+        next_point = (path[i + 1][1] * square_size - square_size // 2, path[i + 1][0] * square_size - square_size // 2)
 
         # Draw a line connecting the current and next points on the image
         cv2.line(image, current_point, next_point, color, thickness=2)

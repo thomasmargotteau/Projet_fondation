@@ -402,12 +402,9 @@ while True:
         # Display or save the image with numbers
         cv2.imshow('Grid with Numbers', img_with_colored_boxes_corrected)
         cv2.imwrite("Images\JPS_result.jpg", img_with_colored_boxes_corrected)
-        JPS_Pathfinding.jps_algorithm(grid, (60, 80), (19, 79), square_size, img_with_colored_boxes)
-        cv2.imshow('JPS* result', img_with_colored_boxes)
-        print(f"{grid[0][29]}")
-        print(f"{grid[1][29]}")
-        print(f"{grid[2][29]}")
-        print(f"{grid[3][29]}")
+        JPS_Pathfinding.jps_algorithm(grid, (60, 80), (17, 50), square_size, img_with_colored_boxes_corrected)
+        cv2.imshow('JPS* result', img_with_colored_boxes_corrected)
+
 
     if cv2.waitKey(1) & 0xFF == ord('q'):
         break
