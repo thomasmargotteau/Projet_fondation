@@ -1,7 +1,8 @@
 import numpy as np
 import cv2
 
-def jps_algorithm(grid, start, goal):
+
+def jps_algorithm(grid, start, goal, square_size, image=None):
     """
     Implement the Jump Point Search (JPS*) algorithm to find the shortest path from start to goal on the grid.
 
@@ -9,10 +10,12 @@ def jps_algorithm(grid, start, goal):
         grid (numpy.ndarray): 2D grid representing the environment with obstacles marked as 1 and free cells as 0.
         start (tuple): Coordinates of the starting point (row, column).
         goal (tuple): Coordinates of the goal point (row, column).
+        image (numpy.ndarray): Optional. Image on which the path will be drawn.
 
     Returns:
         path (list of tuples): List of coordinates representing the shortest path from start to goal.
     """
+
     # Implement JPS* algorithm here
     def is_valid_cell(row, col):
         """Check if the cell (row, col) is within the grid and is a valid (free) cell."""
@@ -26,14 +29,11 @@ def jps_algorithm(grid, start, goal):
 
     def successors(row, col):
         """Generate successor cells for the given cell using JPS*."""
-        # Implement JPS* successor generation here
-
-        """Generate successor cells for the given cell using JPS*."""
         successors_list = []
 
         # Define directional offsets for horizontal, vertical, and diagonal moves
         directions = [(0, 1), (1, 0), (0, -1), (-1, 0),  # Horizontal and vertical
-                          (1, 1), (1, -1), (-1, 1), (-1, -1)]  # Diagonal
+                      (1, 1), (1, -1), (-1, 1), (-1, -1)]  # Diagonal
 
         # Loop through each direction
         for dr, dc in directions:
@@ -47,7 +47,6 @@ def jps_algorithm(grid, start, goal):
             if grid[r, c] == 0:  # Free cell
                 successors_list.append((r, c))
             else:  # Obstacle or boundary
-                # Identify the forced neighbors and jump points
                 jump_point = jump(r, c, (row, col))
                 if jump_point:
                     successors_list.append(jump_point)
@@ -55,9 +54,6 @@ def jps_algorithm(grid, start, goal):
         return successors_list
 
     def jump(row, col, parent):
-        """Jump to the next jump point."""
-        # Implement JPS* jump point identification here
-
         """Jump to the next jump point."""
         # Calculate the direction of the jump
         dr = row - parent[0]
@@ -89,7 +85,6 @@ def jps_algorithm(grid, start, goal):
         # Recursively search for jump points in the direction of the jump
         return jump(row + dr, col + dc, (row, col))
 
-
     # Initialize the open set with the start node
     open_set = {start}
     # Initialize the closed set
@@ -112,6 +107,11 @@ def jps_algorithm(grid, start, goal):
                 current = parent[current]
                 path.append(current)
             path.reverse()
+
+            # If an image is provided, draw the path on the image
+            if image is not None:
+                draw_path(image, path, square_size)
+
             return path
 
         # Remove the current node from the open set and add it to the closed set
@@ -138,6 +138,36 @@ def jps_algorithm(grid, start, goal):
 
     # If no path is found, return an empty list
     return []
+
+
+def draw_path(image, path, square_size):
+    """
+    Draw the path on the provided image.
+
+    Parameters:
+        image (numpy.ndarray): Image on which the path will be drawn.
+        path (list of tuples): List of coordinates representing the path.
+        square_size (int): Size of each square in the grid.
+    """
+    # Define colors for drawing the path
+    color = (0, 255, 0)  # Green color for the path
+
+    # Loop through each point in the path
+    for i in range(len(path) - 1):
+        # Calculate the coordinates of the current and next points in the path
+        current_point = (path[i][1] * square_size + square_size // 2, path[i][0] * square_size + square_size // 2)
+        next_point = (path[i + 1][1] * square_size + square_size // 2, path[i + 1][0] * square_size + square_size // 2)
+
+        # Draw a line connecting the current and next points on the image
+        cv2.line(image, current_point, next_point, color, thickness=2)
+    return image
+
+
+
+
+
+
+
 
 
 
