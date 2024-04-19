@@ -402,7 +402,7 @@ while True:
         # Display or save the image with numbers
         cv2.imshow('Grid with Numbers', img_with_colored_boxes_corrected)
         cv2.imwrite("Images\JPS_result.jpg", img_with_colored_boxes_corrected)
-        JPS_Pathfinding.jps_algorithm(grid, (60, 80), (17, 50), square_size, img_with_colored_boxes_corrected)
+        JPS_Pathfinding.jps_algorithm(grid, (60, 80), (31, 34), square_size, img_with_colored_boxes_corrected)
         cv2.imshow('JPS* result', img_with_colored_boxes_corrected)
 
 

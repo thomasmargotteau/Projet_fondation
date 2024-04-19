@@ -1,6 +1,6 @@
 import numpy as np
 import cv2
-
+from heapq import heappop, heappush
 
 def jps_algorithm(grid, start, goal, square_size, image=None):
     """
@@ -15,6 +15,10 @@ def jps_algorithm(grid, start, goal, square_size, image=None):
     Returns:
         path (list of tuples): List of coordinates representing the shortest path from start to goal.
     """
+
+    # Define function to calculate Manhattan distance between two points
+    def manhattan_distance(point1, point2):
+        return abs(point1[0] - point2[0]) + abs(point1[1] - point2[1])
 
     # Implement JPS* algorithm here
     def is_valid_cell(row, col):
@@ -86,7 +90,7 @@ def jps_algorithm(grid, start, goal, square_size, image=None):
         return jump(row + dr, col + dc, (row, col))
 
     # Initialize the open set with the start node
-    open_set = {start}
+    open_set = [(manhattan_distance(start, goal), start)]
     # Initialize the closed set
     closed_set = set()
 
@@ -96,8 +100,8 @@ def jps_algorithm(grid, start, goal, square_size, image=None):
 
     # Run the main loop of the algorithm
     while open_set:
-        # Select the node with the lowest g-value from the open set
-        current = min(open_set, key=lambda x: g_values[x])
+        # Select the node with the lowest f-value from the open set
+        _, current = heappop(open_set)
 
         # Check if the goal is reached
         if current == goal:
@@ -115,7 +119,6 @@ def jps_algorithm(grid, start, goal, square_size, image=None):
             return path
 
         # Remove the current node from the open set and add it to the closed set
-        open_set.remove(current)
         closed_set.add(current)
 
         # Generate successors for the current node
@@ -128,17 +131,19 @@ def jps_algorithm(grid, start, goal, square_size, image=None):
             tentative_g = g_values[current] + 1
 
             # Check if the successor is not in the open set or has a lower g-value
-            if successor not in open_set or tentative_g < g_values[successor]:
+            if successor not in open_set or tentative_g < g_values.get(successor, float('inf')):
                 # Update the parent and g-value for the successor
                 parent[successor] = current
                 g_values[successor] = tentative_g
 
-                # Add the successor to the open set
-                open_set.add(successor)
+                # Calculate the f-value (f = g + h)
+                f_value = tentative_g + manhattan_distance(successor, goal)
+
+                # Add the successor to the open set with its f-value
+                heappush(open_set, (f_value, successor))
 
     # If no path is found, return an empty list
     return []
-
 
 def draw_path(image, path, square_size):
     """
@@ -161,13 +166,3 @@ def draw_path(image, path, square_size):
         # Draw a line connecting the current and next points on the image
         cv2.line(image, current_point, next_point, color, thickness=2)
     return image
-
-
-
-
-
-
-
-
-
-
