@@ -27,7 +27,7 @@ def jps_algorithm(grid, start, goal, square_size, image=None):
         if row < 0 or col < 0 or row >= grid.shape[0] or col >= grid.shape[1]:
             return False
         # Check if the cell is a valid (free) cell
-        if grid[row, col] == 1:
+        if grid[row, col] == 2:  # Obstacle
             return False
         return True
 
@@ -156,6 +156,7 @@ def draw_path(image, path, square_size):
     """
     # Define colors for drawing the path
     color = (0, 255, 0)  # Green color for the path
+    arrow_color = (255, 0, 0)
 
     # Loop through each point in the path
     for i in range(len(path) - 1):
@@ -164,5 +165,58 @@ def draw_path(image, path, square_size):
         next_point = (path[i + 1][1] * square_size - square_size // 2, path[i + 1][0] * square_size - square_size // 2)
 
         # Draw a line connecting the current and next points on the image
-        cv2.line(image, current_point, next_point, color, thickness=2)
+        cv2.line(image, current_point, next_point, color, thickness=1)
+        # Calculate angle and draw arrow head
+        angle = np.arctan2(next_point[1] - current_point[1], next_point[0] - current_point[0])
+        p1 = (int(next_point[0] - 8 * np.cos(angle - np.pi / 6)),
+              int(next_point[1] - 8 * np.sin(angle - np.pi / 6)))
+        p2 = (int(next_point[0] - 8 * np.cos(angle + np.pi / 6)),
+              int(next_point[1] - 8 * np.sin(angle + np.pi / 6)))
+        cv2.line(image, next_point, p1, arrow_color, 2)
+        cv2.line(image, next_point, p2, arrow_color, 2)
     return image
+
+
+
+def find_color_centers(grid, target_color):
+    red_centers = []
+    visited = set()
+
+    for y in range(grid.shape[0]):
+        for x in range(grid.shape[1]):
+            if grid[y][x] == target_color and (y, x) not in visited:
+                # Find the cluster of red boxes
+                cluster = []
+                queue = [(y, x)]
+                while queue:
+                    node_y, node_x = queue.pop(0)
+                    if grid[node_y][node_x] == target_color and (node_y, node_x) not in visited:
+                        visited.add((node_y, node_x))
+                        cluster.append((node_y, node_x))
+                        # Check neighbors
+                        for dy in range(-1, 2):
+                            for dx in range(-1, 2):
+                                if (0 <= node_y + dy < grid.shape[0] and
+                                        0 <= node_x + dx < grid.shape[1] and
+                                        grid[node_y + dy][node_x + dx] == target_color):
+                                    queue.append((node_y + dy, node_x + dx))
+                # Find the center of the cluster
+                if cluster:
+                    sum_y = sum(node[0] for node in cluster)
+                    sum_x = sum(node[1] for node in cluster)
+                    center_y = (sum_y // len(cluster)) + 1
+                    center_x = (sum_x // len(cluster)) + 1
+                    red_centers.append((center_y, center_x))
+
+    return red_centers
+
+def manhattan_distance(point1, point2):
+    return abs(point1[0] - point2[0]) + abs(point1[1] - point2[1])
+
+def find_closest_point(points, square_size, start=None):
+    if start:
+        start = [coord * square_size for coord in start]
+    else:
+        start = (0, 0)
+    closest_point = min(points, key=lambda point: manhattan_distance(point, start))
+    return closest_point

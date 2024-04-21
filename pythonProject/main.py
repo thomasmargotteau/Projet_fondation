@@ -3,6 +3,54 @@ import cv2.aruco as aruco
 import numpy as np
 import Grid
 import JPS_Pathfinding
+import os
+import json
+
+ARUCO_DICT = cv2.aruco.DICT_6X6_250  # Dictionary ID
+SQUARES_VERTICALLY = 7  # Number of squares vertically
+SQUARES_HORIZONTALLY = 5  # Number of squares horizontally
+SQUARE_LENGTH = 300  # Square side length (in pixels)
+MARKER_LENGTH = 150  # ArUco marker side length (in pixels)
+MARGIN_PX = 100  # Margins size (in pixels)
+
+IMG_SIZE = tuple(i * SQUARE_LENGTH + 2 * MARGIN_PX for i in (SQUARES_VERTICALLY, SQUARES_HORIZONTALLY))
+OUTPUT_NAME = 'Images\ChArUco_Marker.png'
+
+
+def get_calibration_parameters(img_dir):
+    # Define the aruco dictionary, charuco board and detector
+    dictionary = cv2.aruco.getPredefinedDictionary(ARUCO_DICT)
+    board = cv2.aruco.CharucoBoard((SQUARES_VERTICALLY, SQUARES_HORIZONTALLY), SQUARE_LENGTH, MARKER_LENGTH, dictionary)
+    params = cv2.aruco.DetectorParameters()
+    detector = cv2.aruco.ArucoDetector(dictionary, params)
+
+    # Load images from directory
+    image_files = [os.path.join(img_dir, f) for f in os.listdir(img_dir) if
+                   f.startswith("ChAruco_Board_") and f.endswith(".jpg")]
+
+    all_charuco_ids = []
+    all_charuco_corners = []
+
+    # Loop over images and extraction of corners
+    for image_file in image_files:
+        image = cv2.imread(image_file)
+        image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+        imgSize = image.shape
+        image_copy = image.copy()
+        marker_corners, marker_ids, rejectedCandidates = detector.detectMarkers(image)
+        if marker_ids is not None and len(marker_ids) > 0:  # Check if markers are detected
+            ret, charucoCorners, charucoIds = cv2.aruco.interpolateCornersCharuco(marker_corners, marker_ids, image, board)
+            if ret:
+                all_charuco_corners.append(charucoCorners)
+                all_charuco_ids.append(charucoIds)
+
+        else:
+            print(f"Pas de marker détecté")
+
+    # Calibrate camera with extracted information
+    result, mtx, dist, rvecs, tvecs = cv2.aruco.calibrateCameraCharuco(all_charuco_corners, all_charuco_ids, board,
+                                                                       imgSize, None, None)
+    return mtx, dist
 
 
 def calculate_perspective_transform_matrix(Corner1, Corner2, Corner3, Corner4, size):
@@ -45,6 +93,29 @@ TEST = 1
 
 final_size = (1200, 800)
 
+img_dir = "C:\Documents\Foundation_project\pythonProject\Images"
+
+'''SENSOR = 'monochrome'
+LENS = 'S10_Arthur_0.7'
+OUTPUT_JSON = 'Calibration.json'
+
+mtx, dist = get_calibration_parameters(img_dir)
+data = {"sensor": SENSOR, "lens": LENS, "mtx": mtx.tolist(), "dist": dist.tolist()}
+
+with open(OUTPUT_JSON, 'w') as json_file:
+    json.dump(data, json_file, indent=4)
+
+print(f'Data has been saved to {OUTPUT_JSON}')
+
+json_file_path = './Calibration.json'
+
+with open(json_file_path, 'r') as file: # Read the JSON file
+    json_data = json.load(file)
+
+mtx = np.array(json_data['mtx'])
+dst = np.array(json_data['dist'])'''
+
+
 if TEST != 1:
     cap = cv2.VideoCapture(0)
 
@@ -71,10 +142,12 @@ nomImages = (
 nbImages = len(nomImages)
 
 frame = cv2.imread(nomImages[0])
+
+
 # Define the rectangles
 rectangles = [
-    ((224, 605), (309, 690), (1, 37, 255)),   # Red zone
-    ((806, 21), (883, 106), (255, 88, 2)),   # Blue zone
+    ((224, 605), (309, 690), (1, 37, 255)),  # Red zone
+    ((806, 21), (883, 106), (255, 88, 2)),  # Blue zone
     ((806, 605), (883, 690), (23, 143, 26)),  # Green zone
     ((224, 21), (309, 106), (167, 3, 255))  # Yellow zone
 ]
@@ -91,6 +164,13 @@ while True:
             cpt += 1
             if cpt == nbImages + 1:
                 cpt = 0
+
+    cv2.imwrite("Images\Frame.jpg", frame)
+    '''h, w = frame.shape[:2]
+    newcameramtx, roi = cv2.getOptimalNewCameraMatrix(mtx, dst, (w, h), 1, (w, h))
+    frame = cv2.undistort(frame, mtx, dst, None, newcameramtx)
+    cv2.imwrite("Images\Corrected_frame.jpg", frame)'''
+
     gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 
     corners, ids, rejectedCandidates = detector.detectMarkers(gray)
@@ -255,7 +335,6 @@ while True:
 
         cv2.imshow('Cropped image', cropped_image)
 
-
         img_copy = dst.copy()
 
         # Define the centers of the circles
@@ -324,7 +403,7 @@ while True:
                 bound_lower = np.array(
                     [mean_bgr_values[0][0] - 15, mean_bgr_values[0][1] - 15, mean_bgr_values[0][2] - 15])
                 bound_upper = np.array(
-                    [mean_bgr_values[3][0] - 5, mean_bgr_values[3][1]- 5, mean_bgr_values[3][1] - 5])
+                    [mean_bgr_values[3][0] - 5, mean_bgr_values[3][1] - 5, mean_bgr_values[3][1] - 5])
                 grey_mask = cv2.inRange(cropped_image, bound_lower, bound_upper)
 
         kernel = np.ones((14, 14), np.uint8)
@@ -385,6 +464,7 @@ while True:
         img_with_colored_boxes, grid = Grid.color_boxes_with_masks(cropped_image, all_masks)
         img_with_colored_boxes_corrected = Grid.remove_small_color_groups(img_with_colored_boxes)
         img_with_colored_boxes_corrected = Grid.add_grid(img_with_colored_boxes_corrected, square_size)
+        img_JPS = img_with_colored_boxes_corrected.copy()
         cv2.imshow('Colored Grid', img_with_colored_boxes_corrected)
         # Draw numbers on the image representing grid values
         font = cv2.FONT_HERSHEY_SIMPLEX
@@ -397,14 +477,29 @@ while True:
                 # Determine text position
                 text_pos = (x * 10 + 2, y * 10 + 9)
                 # Draw text on the image
-                cv2.putText(img_with_colored_boxes_corrected, str(grid[y, x]), text_pos, font, font_scale, text_color, font_thickness)
+                cv2.putText(img_with_colored_boxes_corrected, str(grid[y, x]), text_pos, font, font_scale, text_color,
+                            font_thickness)
 
         # Display or save the image with numbers
         cv2.imshow('Grid with Numbers', img_with_colored_boxes_corrected)
-        cv2.imwrite("Images\JPS_result.jpg", img_with_colored_boxes_corrected)
-        JPS_Pathfinding.jps_algorithm(grid, (60, 80), (31, 34), square_size, img_with_colored_boxes_corrected)
-        cv2.imshow('JPS* result', img_with_colored_boxes_corrected)
 
+        green_zone = JPS_Pathfinding.find_color_centers(grid, 9)
+        blue_cube = JPS_Pathfinding.find_color_centers(grid, 1)
+        red_zone = JPS_Pathfinding.find_color_centers(grid, 8)
+        yellow_zone = JPS_Pathfinding.find_color_centers(grid, 6)
+        blue_zone = JPS_Pathfinding.find_color_centers(grid, 7)
+        red_cubes = JPS_Pathfinding.find_color_centers(grid, 4)
+        white_cubes = JPS_Pathfinding.find_color_centers(grid, 3)
+
+        '''JPS_Pathfinding.jps_algorithm(grid, green_zone[0], blue_cube[0], square_size, img_with_colored_boxes)
+        JPS_Pathfinding.jps_algorithm(grid, blue_cube[0], blue_zone[0], square_size, img_with_colored_boxes)
+        JPS_Pathfinding.jps_algorithm(grid, blue_zone[0], red_cubes[0], square_size, img_with_colored_boxes)'''
+        for red_center in red_cubes:
+            JPS_Pathfinding.jps_algorithm(grid, red_center, red_zone[0], square_size, img_JPS)
+            JPS_Pathfinding.jps_algorithm(grid, red_zone[0], red_center, square_size, img_JPS)
+
+
+        cv2.imshow('JPS* result', img_JPS)
 
     if cv2.waitKey(1) & 0xFF == ord('q'):
         break
