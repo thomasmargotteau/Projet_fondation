@@ -494,18 +494,36 @@ while True:
         red_zone = JPS_Pathfinding.find_color_centers(grid, 8)
         yellow_zone = JPS_Pathfinding.find_color_centers(grid, 6)
         blue_zone = JPS_Pathfinding.find_color_centers(grid, 7)
-        red_cubes = JPS_Pathfinding.find_color_centers(grid, 4)
+
+        img_JPS2 = img_JPS.copy()
+        img_JPS3 = img_JPS.copy()
+
+        JPS_Pathfinding.jps_algorithm(grid, green_zone[0], blue_cube[0], square_size, img_JPS)
+        JPS_Pathfinding.jps_algorithm(grid, blue_cube[0], blue_zone[0], square_size, img_JPS)
+
         white_cubes = JPS_Pathfinding.find_color_centers(grid, 3)
 
-        '''JPS_Pathfinding.jps_algorithm(grid, green_zone[0], blue_cube[0], square_size, img_with_colored_boxes)
-        JPS_Pathfinding.jps_algorithm(grid, blue_cube[0], blue_zone[0], square_size, img_with_colored_boxes)
-        JPS_Pathfinding.jps_algorithm(grid, blue_zone[0], red_cubes[0], square_size, img_with_colored_boxes)'''
-        for red_center in red_cubes:
-            JPS_Pathfinding.jps_algorithm(grid, red_center, red_zone[0], square_size, img_JPS)
-            JPS_Pathfinding.jps_algorithm(grid, red_zone[0], red_center, square_size, img_JPS)
+        JPS_Pathfinding.jps_algorithm(grid, blue_zone[0], white_cubes[0], square_size, img_JPS2)
+        JPS_Pathfinding.jps_algorithm(grid, white_cubes[0], yellow_zone[0], square_size, img_JPS2)
+        JPS_Pathfinding.jps_algorithm(grid, yellow_zone[0], white_cubes[1], square_size, img_JPS2)
+        JPS_Pathfinding.jps_algorithm(grid, white_cubes[1], yellow_zone[0], square_size, img_JPS2)
+        JPS_Pathfinding.jps_algorithm(grid, yellow_zone[0], white_cubes[2], square_size, img_JPS2)
+        JPS_Pathfinding.jps_algorithm(grid, white_cubes[2], yellow_zone[0], square_size, img_JPS2)
+
+        red_cubes = JPS_Pathfinding.find_color_centers(grid, 4)
+        JPS_Pathfinding.jps_algorithm(grid, yellow_zone[0], red_cubes[0], square_size, img_JPS3)
+        JPS_Pathfinding.jps_algorithm(grid, red_cubes[0], red_zone[0], square_size, img_JPS3)
+        '''JPS_Pathfinding.jps_algorithm(grid, red_zone[0], red_cubes[1], square_size, img_JPS3)'''
+        JPS_Pathfinding.jps_algorithm(grid, red_cubes[1], red_zone[0], square_size, img_JPS3)
+        '''JPS_Pathfinding.jps_algorithm(grid, red_zone[0], red_cubes[2], square_size, img_JPS3)
+        JPS_Pathfinding.jps_algorithm(grid, red_cubes[2], red_zone[0], square_size, img_JPS3)
+        JPS_Pathfinding.jps_algorithm(grid, red_zone[0], red_cubes[3], square_size, img_JPS3)
+        JPS_Pathfinding.jps_algorithm(grid, red_cubes[3], red_zone[0], square_size, img_JPS3)'''
 
 
         cv2.imshow('JPS* result', img_JPS)
+        cv2.imshow('JPS* result 2', img_JPS2)
+        cv2.imshow('JPS* result 3', img_JPS3)
 
     if cv2.waitKey(1) & 0xFF == ord('q'):
         break

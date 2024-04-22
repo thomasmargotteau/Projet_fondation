@@ -25,8 +25,8 @@ def jps_algorithm(grid, start, goal, square_size, image=None):
         """Check if the cell (row, col) is within the grid and is a valid (free) cell."""
         # Check if the cell is within the grid boundaries
         if row < 0 or col < 0 or row >= grid.shape[0] or col >= grid.shape[1]:
-            return False
-        # Check if the cell is a valid (free) cell
+            return Falsevv
+        # Check if the cell is a valid (free) cellgv
         if grid[row, col] == 2:  # Obstacle
             return False
         return True
@@ -48,7 +48,7 @@ def jps_algorithm(grid, start, goal, square_size, image=None):
                 continue
 
             # Check if the cell is a forced neighbor or a jump point
-            if grid[r, c] == 0:  # Free cell
+            if (grid[r, c] == 0 or grid[r, c] == 6 or grid[r, c] == 7 or grid[r, c] == 8 or grid[r, c] == 9 or grid[r, c] == 5):  # Free cell
                 successors_list.append((r, c))
             else:  # Obstacle or boundary
                 jump_point = jump(r, c, (row, col))
@@ -168,12 +168,12 @@ def draw_path(image, path, square_size):
         cv2.line(image, current_point, next_point, color, thickness=1)
         # Calculate angle and draw arrow head
         angle = np.arctan2(next_point[1] - current_point[1], next_point[0] - current_point[0])
-        p1 = (int(next_point[0] - 8 * np.cos(angle - np.pi / 6)),
-              int(next_point[1] - 8 * np.sin(angle - np.pi / 6)))
-        p2 = (int(next_point[0] - 8 * np.cos(angle + np.pi / 6)),
-              int(next_point[1] - 8 * np.sin(angle + np.pi / 6)))
-        cv2.line(image, next_point, p1, arrow_color, 2)
-        cv2.line(image, next_point, p2, arrow_color, 2)
+        p1 = (int(next_point[0] - 6 * np.cos(angle - np.pi / 6)),
+              int(next_point[1] - 6 * np.sin(angle - np.pi / 6)))
+        p2 = (int(next_point[0] - 6 * np.cos(angle + np.pi / 6)),
+              int(next_point[1] - 6 * np.sin(angle + np.pi / 6)))
+        cv2.line(image, next_point, p1, arrow_color, 1)
+        cv2.line(image, next_point, p2, arrow_color, 1)
     return image
 
 
