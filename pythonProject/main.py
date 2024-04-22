@@ -30,27 +30,33 @@ def get_calibration_parameters(img_dir):
 
     all_charuco_ids = []
     all_charuco_corners = []
+    imgSize = None
 
     # Loop over images and extraction of corners
     for image_file in image_files:
         image = cv2.imread(image_file)
-        image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-        imgSize = image.shape
-        image_copy = image.copy()
-        marker_corners, marker_ids, rejectedCandidates = detector.detectMarkers(image)
+        gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+        if imgSize is None:  # Calculate imgSize only once
+            imgSize = gray.shape
+        image_copy = gray.copy()
+        marker_corners, marker_ids, rejectedCandidates = detector.detectMarkers(gray)
         if marker_ids is not None and len(marker_ids) > 0:  # Check if markers are detected
-            ret, charucoCorners, charucoIds = cv2.aruco.interpolateCornersCharuco(marker_corners, marker_ids, image, board)
+            ret, charucoCorners, charucoIds = cv2.aruco.interpolateCornersCharuco(marker_corners, marker_ids, gray,
+                                                                                  board)
             if ret:
                 all_charuco_corners.append(charucoCorners)
                 all_charuco_ids.append(charucoIds)
-
         else:
-            print(f"Pas de marker détecté")
+            print(f"No marker detected in {image_file}")
+
+    if imgSize is None:
+        print("Error: No images found in the directory")
+        return None, None
 
     # Calibrate camera with extracted information
     result, mtx, dist, rvecs, tvecs = cv2.aruco.calibrateCameraCharuco(all_charuco_corners, all_charuco_ids, board,
                                                                        imgSize, None, None)
-    return mtx, dist
+    return mtx, dist.flatten()
 
 
 def calculate_perspective_transform_matrix(Corner1, Corner2, Corner3, Corner4, size):
@@ -95,25 +101,26 @@ final_size = (1200, 800)
 
 img_dir = "C:\Documents\Foundation_project\pythonProject\Images"
 
-'''SENSOR = 'monochrome'
+SENSOR = 'monochrome'
 LENS = 'S10_Arthur_0.7'
 OUTPUT_JSON = 'Calibration.json'
 
-mtx, dist = get_calibration_parameters(img_dir)
+'''mtx, dist = get_calibration_parameters(img_dir)
 data = {"sensor": SENSOR, "lens": LENS, "mtx": mtx.tolist(), "dist": dist.tolist()}
 
 with open(OUTPUT_JSON, 'w') as json_file:
     json.dump(data, json_file, indent=4)
 
-print(f'Data has been saved to {OUTPUT_JSON}')
+print(f'Data has been saved to {OUTPUT_JSON}')'''
 
 json_file_path = './Calibration.json'
 
 with open(json_file_path, 'r') as file: # Read the JSON file
     json_data = json.load(file)
 
+
 mtx = np.array(json_data['mtx'])
-dst = np.array(json_data['dist'])'''
+dist = np.array(json_data['dist'])
 
 
 if TEST != 1:
@@ -166,10 +173,10 @@ while True:
                 cpt = 0
 
     cv2.imwrite("Images\Frame.jpg", frame)
-    '''h, w = frame.shape[:2]
-    newcameramtx, roi = cv2.getOptimalNewCameraMatrix(mtx, dst, (w, h), 1, (w, h))
-    frame = cv2.undistort(frame, mtx, dst, None, newcameramtx)
-    cv2.imwrite("Images\Corrected_frame.jpg", frame)'''
+    h, w = frame.shape[:2]
+    newcameramtx, roi = cv2.getOptimalNewCameraMatrix(mtx, dist, (w, h), 1, (w, h))
+    frame = cv2.undistort(frame, mtx, dist, None, newcameramtx)
+    cv2.imwrite("Images\Corrected_frame.jpg", frame)
 
     gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 
@@ -201,7 +208,6 @@ while True:
         RB = 132
         tailleRB = 75
         # Saving the images to a file
-        cv2.imwrite("Images\Frame.jpg", frame)
         cv2.imwrite("Images\Transformed_image.jpg", dst)
 
         vector_img = cv2.imread("Images\Transformed_image.jpg")
@@ -401,7 +407,7 @@ while True:
             elif i == 2:
                 # Grey
                 bound_lower = np.array(
-                    [mean_bgr_values[0][0] - 15, mean_bgr_values[0][1] - 15, mean_bgr_values[0][2] - 15])
+                    [mean_bgr_values[0][0] - 25, mean_bgr_values[0][1] - 25, mean_bgr_values[0][2] - 25])
                 bound_upper = np.array(
                     [mean_bgr_values[3][0] - 5, mean_bgr_values[3][1] - 5, mean_bgr_values[3][1] - 5])
                 grey_mask = cv2.inRange(cropped_image, bound_lower, bound_upper)
