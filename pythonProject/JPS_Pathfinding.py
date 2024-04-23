@@ -2,6 +2,7 @@ import numpy as np
 import cv2
 from heapq import heappop, heappush
 
+
 def jps_algorithm(grid, start, goal, square_size, image=None):
     """
     Implement the Jump Point Search (JPS*) algorithm to find the shortest path from start to goal on the grid.
@@ -10,6 +11,7 @@ def jps_algorithm(grid, start, goal, square_size, image=None):
         grid (numpy.ndarray): 2D grid representing the environment with obstacles marked as 1 and free cells as 0.
         start (tuple): Coordinates of the starting point (row, column).
         goal (tuple): Coordinates of the goal point (row, column).
+        square_size (int): Size of each square in the grid.
         image (numpy.ndarray): Optional. Image on which the path will be drawn.
 
     Returns:
@@ -21,17 +23,17 @@ def jps_algorithm(grid, start, goal, square_size, image=None):
         return abs(point1[0] - point2[0]) + abs(point1[1] - point2[1])
 
     # Implement JPS* algorithm here
-    def is_valid_cell(row, col):
+    def is_valid_cell(row, col, parent):
         """Check if the cell (row, col) is within the grid and is a valid (free) cell."""
         # Check if the cell is within the grid boundaries
         if row < 0 or col < 0 or row >= grid.shape[0] or col >= grid.shape[1]:
-            return Falsevv
-        # Check if the cell is a valid (free) cellgv
+            return False
+        # Check if the cell is a valid (free) cell
         if grid[row, col] == 2:  # Obstacle
             return False
         return True
 
-    def successors(row, col):
+    def successors(row, col, parent):
         """Generate successor cells for the given cell using JPS*."""
         successors_list = []
 
@@ -44,11 +46,11 @@ def jps_algorithm(grid, start, goal, square_size, image=None):
             r, c = row + dr, col + dc
 
             # If the cell in this direction is not valid, continue to the next direction
-            if not is_valid_cell(r, c):
+            if not is_valid_cell(r, c, (row, col)):
                 continue
 
             # Check if the cell is a forced neighbor or a jump point
-            if (grid[r, c] == 0 or grid[r, c] == 6 or grid[r, c] == 7 or grid[r, c] == 8 or grid[r, c] == 9 or grid[r, c] == 5):  # Free cell
+            if is_valid_cell(r, c, (row, col)):  # Free cell
                 successors_list.append((r, c))
             else:  # Obstacle or boundary
                 jump_point = jump(r, c, (row, col))
@@ -64,7 +66,7 @@ def jps_algorithm(grid, start, goal, square_size, image=None):
         dc = col - parent[1]
 
         # If the parent cell is not valid, return None
-        if not is_valid_cell(row, col):
+        if not is_valid_cell(row, col, parent):
             return None
 
         # If the current cell is the goal, return it as a jump point
@@ -73,17 +75,17 @@ def jps_algorithm(grid, start, goal, square_size, image=None):
 
         # Check if the cell is a forced neighbor
         if dr != 0 and dc != 0:  # Diagonal move
-            if (is_valid_cell(row - dr, col) and not is_valid_cell(row - dr, col - dc)) or \
-                    (is_valid_cell(row, col - dc) and not is_valid_cell(row - dr, col - dc)):
+            if (is_valid_cell(row - dr, col, (row, col)) and not is_valid_cell(row - dr, col - dc, (row, col))) or \
+                    (is_valid_cell(row, col - dc, (row, col)) and not is_valid_cell(row - dr, col - dc, (row, col))):
                 return row, col
         else:  # Horizontal or vertical move
             if dr != 0:  # Vertical move
-                if (is_valid_cell(row, col + 1) and not is_valid_cell(row - dr, col + 1)) or \
-                        (is_valid_cell(row, col - 1) and not is_valid_cell(row - dr, col - 1)):
+                if (is_valid_cell(row, col + 1, (row, col)) and not is_valid_cell(row - dr, col + 1, (row, col))) or \
+                        (is_valid_cell(row, col - 1, (row, col)) and not is_valid_cell(row - dr, col - 1, (row, col))):
                     return row, col
             else:  # Horizontal move
-                if (is_valid_cell(row + 1, col) and not is_valid_cell(row + 1, col - dc)) or \
-                        (is_valid_cell(row - 1, col) and not is_valid_cell(row - 1, col - dc)):
+                if (is_valid_cell(row + 1, col, (row, col)) and not is_valid_cell(row + 1, col - dc, (row, col))) or \
+                        (is_valid_cell(row - 1, col, (row, col)) and not is_valid_cell(row - 1, col - dc, (row, col))):
                     return row, col
 
         # Recursively search for jump points in the direction of the jump
@@ -122,7 +124,7 @@ def jps_algorithm(grid, start, goal, square_size, image=None):
         closed_set.add(current)
 
         # Generate successors for the current node
-        for successor in successors(*current):
+        for successor in successors(*current, current):
             # Check if the successor is in the closed set
             if successor in closed_set:
                 continue
@@ -144,6 +146,8 @@ def jps_algorithm(grid, start, goal, square_size, image=None):
 
     # If no path is found, return an empty list
     return []
+
+
 
 def draw_path(image, path, square_size):
     """
@@ -177,9 +181,8 @@ def draw_path(image, path, square_size):
     return image
 
 
-
 def find_color_centers(grid, target_color):
-    red_centers = []
+    Color_centers = []
     visited = set()
 
     for y in range(grid.shape[0]):
@@ -206,12 +209,14 @@ def find_color_centers(grid, target_color):
                     sum_x = sum(node[1] for node in cluster)
                     center_y = (sum_y // len(cluster)) + 1
                     center_x = (sum_x // len(cluster)) + 1
-                    red_centers.append((center_y, center_x))
+                    Color_centers.append((center_y, center_x))
 
-    return red_centers
+    return Color_centers
+
 
 def manhattan_distance(point1, point2):
     return abs(point1[0] - point2[0]) + abs(point1[1] - point2[1])
+
 
 def find_closest_point(points, square_size, start=None):
     if start:

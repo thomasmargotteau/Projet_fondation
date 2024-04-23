@@ -1,5 +1,7 @@
 import cv2
 import numpy as np
+
+
 def add_grid(image, square_size):
     # Read the image
     img = image
@@ -17,12 +19,14 @@ def add_grid(image, square_size):
         cv2.line(img, (0, y), (img_width, y), (0, 0, 0), 1)
     return img
 
+
 # Function to draw a 20x20 square centered at a given point with a specified color
 def draw_square(img, center, color):
     half_size = 18
     top_left = (center[0] - half_size, center[1] - half_size)
     bottom_right = (center[0] + half_size, center[1] + half_size)
     cv2.rectangle(img, top_left, bottom_right, color, -1)
+
 
 def color_boxes_with_masks(grid_img, masks):
     img_with_colored_boxes = grid_img.copy()
@@ -35,9 +39,9 @@ def color_boxes_with_masks(grid_img, masks):
         'white': (145, 5, 83),
         'black': (0, 0, 0),
         'yellow_zone': (167, 3, 255),  # Yellow for marking 6
-        'blue_zone': (255, 88, 2),       # Blue for marking 7
-        'red_zone': (1, 37, 255),        # Red for marking 8
-        'green_zone': (23, 143, 26)       # Green for marking 9
+        'blue_zone': (255, 88, 2),  # Blue for marking 7
+        'red_zone': (1, 37, 255),  # Red for marking 8
+        'green_zone': (23, 143, 26)  # Green for marking 9
     }
 
     # Define values for each color in the grid
@@ -50,8 +54,8 @@ def color_boxes_with_masks(grid_img, masks):
         (0, 0, 0): 5,  # black
         (167, 3, 255): 6,  # yellow zone
         (255, 88, 2): 7,  # blue zone
-        (1, 37, 255): 8,    # red zone
-        (23, 143, 26): 9   # green zone
+        (1, 37, 255): 8,  # red zone
+        (23, 143, 26): 9  # green zone
     }
 
     # Create an empty grid
@@ -64,7 +68,7 @@ def color_boxes_with_masks(grid_img, masks):
             # Check if any mask has a non-zero value within the current grid cell
             mask_color = (255, 255, 255)  # Default color if no mask is present
             for mask_name, mask in masks.items():
-                if np.any(mask[y:y+square_size, x:x+square_size]):
+                if np.any(mask[y:y + square_size, x:x + square_size]):
                     # If any mask has a non-zero value, color the box with the corresponding color
                     mask_color = colors[mask_name]
                     break
@@ -80,19 +84,20 @@ def color_boxes_with_masks(grid_img, masks):
                 grid[grid_y, grid_x] = color_values[(167, 3, 255)]  # Mark as yellow zone
                 cv2.rectangle(img_with_colored_boxes, (x, y), (x + square_size, y + square_size), (167, 3, 255), -1)
             elif 2 <= grid_y <= 9 and 80 <= grid_x <= 87:
-                grid[grid_y, grid_x] = color_values[(255, 88, 2)]   # Mark as blue zone
+                grid[grid_y, grid_x] = color_values[(255, 88, 2)]  # Mark as blue zone
                 cv2.rectangle(img_with_colored_boxes, (x, y), (x + square_size, y + square_size), (255, 88, 2), -1)
             elif 60 <= grid_y <= 67 and 22 <= grid_x <= 29:
-                grid[grid_y, grid_x] = color_values[(1, 37, 255)]   # Mark as red zone
+                grid[grid_y, grid_x] = color_values[(1, 37, 255)]  # Mark as red zone
                 cv2.rectangle(img_with_colored_boxes, (x, y), (x + square_size, y + square_size), (1, 37, 255), -1)
             elif 60 <= grid_y <= 67 and 80 <= grid_x <= 87:
-                grid[grid_y, grid_x] = color_values[(23, 143, 26)]   # Mark as green zone
+                grid[grid_y, grid_x] = color_values[(23, 143, 26)]  # Mark as green zone
                 cv2.rectangle(img_with_colored_boxes, (x, y), (x + square_size, y + square_size), (23, 143, 26), -1)
             else:
                 # Mark other boxes according to their colors
                 grid[grid_y, grid_x] = color_values[mask_color]
 
     return img_with_colored_boxes, grid
+
 
 def remove_small_color_groups(img_with_colored_boxes):
     square_size = 10  # Size of each square in pixels
@@ -109,11 +114,12 @@ def remove_small_color_groups(img_with_colored_boxes):
             same_color_neighbors = 0
             for dy in range(-square_size, square_size + 1, square_size):
                 for dx in range(-square_size, square_size + 1, square_size):
-                    if (dy != 0 or dx != 0) and np.all(img_with_colored_boxes[y+dy, x+dx] == current_color):
+                    if (dy != 0 or dx != 0) and np.all(img_with_colored_boxes[y + dy, x + dx] == current_color):
                         same_color_neighbors += 1
 
             # If less than 3 neighbors of the same color, change color to white
             if same_color_neighbors < 2:
-                cv2.rectangle(img_with_filtered_color_groups, (x, y), (x+square_size, y+square_size), (255, 255, 255), -1)
+                cv2.rectangle(img_with_filtered_color_groups, (x, y), (x + square_size, y + square_size),
+                              (255, 255, 255), -1)
 
     return img_with_filtered_color_groups

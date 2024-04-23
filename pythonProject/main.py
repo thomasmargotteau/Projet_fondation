@@ -78,7 +78,7 @@ def get_mean_hsv(image, center):
     x, y = center
     hsv_image = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
     circle_mask = np.zeros_like(hsv_image[:, :, 0], dtype=np.uint8)
-    cv2.circle(circle_mask, center, 2, 255, -1)
+    cv2.circle(circle_mask, center, 3, 255, -1)
     mean_hsv = cv2.mean(hsv_image, mask=circle_mask)[:3]
     return tuple(map(round, mean_hsv))
 
@@ -89,7 +89,7 @@ def get_mean_bgr(image, center):
     x, y = center
     bgr_image = image
     circle_mask = np.zeros_like(bgr_image[:, :, 0], dtype=np.uint8)
-    cv2.circle(circle_mask, center, 2, 255, -1)
+    cv2.circle(circle_mask, center, 3, 255, -1)
     mean_bgr = cv2.mean(bgr_image, mask=circle_mask)[:3]
     return tuple(map(round, mean_bgr))
 
@@ -115,13 +115,11 @@ print(f'Data has been saved to {OUTPUT_JSON}')'''
 
 json_file_path = './Calibration.json'
 
-with open(json_file_path, 'r') as file: # Read the JSON file
+with open(json_file_path, 'r') as file:  # Read the JSON file
     json_data = json.load(file)
-
 
 mtx = np.array(json_data['mtx'])
 dist = np.array(json_data['dist'])
-
 
 if TEST != 1:
     cap = cv2.VideoCapture(0)
@@ -149,7 +147,6 @@ nomImages = (
 nbImages = len(nomImages)
 
 frame = cv2.imread(nomImages[0])
-
 
 # Define the rectangles
 rectangles = [
@@ -500,6 +497,7 @@ while True:
 
         JPS_Pathfinding.jps_algorithm(grid, green_zone[0], blue_cube[0], square_size, img_JPS)
         JPS_Pathfinding.jps_algorithm(grid, blue_cube[0], blue_zone[0], square_size, img_JPS)
+        JPS_Pathfinding.jps_algorithm(grid, (44, 18), (39, 18), square_size, img_JPS)
 
         white_cubes = JPS_Pathfinding.find_color_centers(grid, 3)
 
@@ -513,13 +511,14 @@ while True:
         red_cubes = JPS_Pathfinding.find_color_centers(grid, 4)
         JPS_Pathfinding.jps_algorithm(grid, yellow_zone[0], red_cubes[0], square_size, img_JPS3)
         JPS_Pathfinding.jps_algorithm(grid, red_cubes[0], red_zone[0], square_size, img_JPS3)
-        '''JPS_Pathfinding.jps_algorithm(grid, red_zone[0], red_cubes[1], square_size, img_JPS3)'''
+        JPS_Pathfinding.jps_algorithm(grid, red_zone[0], red_cubes[1], square_size, img_JPS3)
         JPS_Pathfinding.jps_algorithm(grid, red_cubes[1], red_zone[0], square_size, img_JPS3)
-        '''JPS_Pathfinding.jps_algorithm(grid, red_zone[0], red_cubes[2], square_size, img_JPS3)
+        JPS_Pathfinding.jps_algorithm(grid, red_zone[0], red_cubes[2], square_size, img_JPS3)
         JPS_Pathfinding.jps_algorithm(grid, red_cubes[2], red_zone[0], square_size, img_JPS3)
         JPS_Pathfinding.jps_algorithm(grid, red_zone[0], red_cubes[3], square_size, img_JPS3)
-        JPS_Pathfinding.jps_algorithm(grid, red_cubes[3], red_zone[0], square_size, img_JPS3)'''
-
+        JPS_Pathfinding.jps_algorithm(grid, red_cubes[3], red_zone[0], square_size, img_JPS3)
+        JPS_Pathfinding.jps_algorithm(grid, red_zone[0], red_cubes[4], square_size, img_JPS3)
+        JPS_Pathfinding.jps_algorithm(grid, red_cubes[4], red_zone[0], square_size, img_JPS3)
 
         cv2.imshow('JPS* result', img_JPS)
         cv2.imshow('JPS* result 2', img_JPS2)
