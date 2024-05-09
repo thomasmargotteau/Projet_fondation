@@ -59,7 +59,7 @@ def color_boxes_with_masks(grid_img, masks):
     }
 
     # Create an empty grid
-    grid = np.zeros((71, 111), dtype=np.uint8)
+    grid = np.zeros((81, 121), dtype=np.uint8)
 
     # Iterate over each grid cell
     square_size = 10  # Size of each square in pixels
@@ -80,16 +80,16 @@ def color_boxes_with_masks(grid_img, masks):
             grid_x = x // square_size
 
             # Check if the current box falls within the specified regions
-            if 2 <= grid_y <= 9 and 22 <= grid_x <= 29:
+            if 7 <= grid_y <= 14 and 27 <= grid_x <= 34:
                 grid[grid_y, grid_x] = color_values[(167, 3, 255)]  # Mark as yellow zone
                 cv2.rectangle(img_with_colored_boxes, (x, y), (x + square_size, y + square_size), (167, 3, 255), -1)
-            elif 2 <= grid_y <= 9 and 80 <= grid_x <= 87:
+            elif 7 <= grid_y <= 14 and 84 <= grid_x <= 91:
                 grid[grid_y, grid_x] = color_values[(255, 88, 2)]  # Mark as blue zone
                 cv2.rectangle(img_with_colored_boxes, (x, y), (x + square_size, y + square_size), (255, 88, 2), -1)
-            elif 60 <= grid_y <= 67 and 22 <= grid_x <= 29:
+            elif 65 <= grid_y <= 72 and 27 <= grid_x <= 34:
                 grid[grid_y, grid_x] = color_values[(1, 37, 255)]  # Mark as red zone
                 cv2.rectangle(img_with_colored_boxes, (x, y), (x + square_size, y + square_size), (1, 37, 255), -1)
-            elif 60 <= grid_y <= 67 and 80 <= grid_x <= 87:
+            elif 65 <= grid_y <= 72 and 84 <= grid_x <= 91:
                 grid[grid_y, grid_x] = color_values[(23, 143, 26)]  # Mark as green zone
                 cv2.rectangle(img_with_colored_boxes, (x, y), (x + square_size, y + square_size), (23, 143, 26), -1)
             else:

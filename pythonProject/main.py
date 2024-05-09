@@ -78,7 +78,7 @@ def get_mean_hsv(image, center):
     x, y = center
     hsv_image = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
     circle_mask = np.zeros_like(hsv_image[:, :, 0], dtype=np.uint8)
-    cv2.circle(circle_mask, center, 3, 255, -1)
+    cv2.circle(circle_mask, center, 2, 255, -1)
     mean_hsv = cv2.mean(hsv_image, mask=circle_mask)[:3]
     return tuple(map(round, mean_hsv))
 
@@ -89,7 +89,7 @@ def get_mean_bgr(image, center):
     x, y = center
     bgr_image = image
     circle_mask = np.zeros_like(bgr_image[:, :, 0], dtype=np.uint8)
-    cv2.circle(circle_mask, center, 3, 255, -1)
+    cv2.circle(circle_mask, center, 2, 255, -1)
     mean_bgr = cv2.mean(bgr_image, mask=circle_mask)[:3]
     return tuple(map(round, mean_bgr))
 
@@ -131,19 +131,19 @@ parameters = aruco.DetectorParameters()
 detector = aruco.ArucoDetector(aruco_dict, parameters)
 
 nomImages = (
-    "Images\PhotoCam2_1.jpg",  # cpt =  0
-    "Images\PhotoCarteRobot5.jpg",  # cpt =  1
-    "Images\PhotoCarteRobot9.jpg",  # cpt =  2
-    "Images\PhotoCarteRobot1.jpg",  # cpt =  3
-    "Images\PhotoCarteRobot2.jpg",  # cpt =  4
-    "Images\PhotoCarteRobot3.jpg",  # cpt =  5
-    "Images\PhotoCarteRobot6.jpg",  # cpt =  6
-    "Images\PhotoCarteRobot8.jpg",  # cpt =  7
-    "Images\PhotoCarteRobot10.jpg",  # cpt =  8
-    "Images\ConfigBlocsAvecArucoCote1.jpg",  # cpt =  9
-    "Images\PhotoCarteTelephone5.jpg",  # cpt =  10
-    "Images\PhotoCarteRobot11.jpg",  # cpt =  11
-    "Images\ConfigBlocsAvecArucoDessusLoin1.jpg")  # cpt =  12
+    "Images/Photo_Cam_finale_1.jpg",  # cpt =  0
+    "Images/Photo_Cam_finale_2.jpg",  # cpt =  1
+    "Images/Photo_Cam_finale_3.jpg",  # cpt =  2
+    "Images/Photo_Cam_finale_4.jpg",  # cpt =  3
+    "Images/Photo_Cam_finale_5.jpg",  # cpt =  4
+    "Images/Photo_Cam_finale_6.jpg",  # cpt =  5
+    "Images/Photo_Cam_finale_7.jpg",  # cpt =  6
+    "Images/Photo_Cam_finale_8.jpg",  # cpt =  7
+    "Images/PhotoCarteRobot9.jpg",  # cpt =  8
+    "Images/Photo_Cam_finale_10.jpg",  # cpt =  9
+    "Images/Photo_Cam_finale_11.jpg",  # cpt =  10
+    "Images/Photo_Cam_finale_12.jpg")  # cpt =  11
+
 nbImages = len(nomImages)
 
 frame = cv2.imread(nomImages[0])
@@ -156,7 +156,7 @@ rectangles = [
     ((224, 21), (309, 106), (167, 3, 255))  # Yellow zone
 ]
 
-cpt = 2
+cpt = 5
 
 while True:
     if TEST == 0:
@@ -297,70 +297,47 @@ while True:
 
         cv2.imshow("Cache", vector_img)
 
-        # Open the image
-        image = cv2.imread(
-            "Images/Transformed_image.jpg")
-
-        # Define the dimensions of the centered rectangle
-        crop_width = 1110
-        crop_height = 710
-
-        # Calculate the coordinates for cropping
-        left = (image.shape[1] - crop_width) // 2
-        top = (image.shape[0] - crop_height) // 2
-        right = left + crop_width
-        bottom = top + crop_height
-
-        # Crop the image
-        cropped_image = image[top:bottom, left:right]
-
+        Cal_img = dst.copy()
         # Draw the zones
-        cv2.rectangle(cropped_image, (224, 605), (309, 690), (0, 0, 255), 3)  # Red zone
-        cv2.rectangle(cropped_image, (806, 21), (883, 106), (255, 0, 0), 3)  # Blue zone
-        cv2.rectangle(cropped_image, (806, 605), (883, 690), (0, 255, 0), 3)  # Green zone
-        cv2.rectangle(cropped_image, (224, 21), (309, 106), (0, 242, 255), 3)  # Yellow zone
-
-        # Save the cropped image
-        cv2.imwrite("Images/cropped_frame.jpg", cropped_image)
+        cv2.rectangle(dst, (1150, 50), (1200, 0), (0, 0, 0), -1)
+        cv2.rectangle(dst, (1150, 750), (1200, 800), (0, 0, 0), -1)
+        cv2.rectangle(dst, (0, 0), (50, 50), (0, 0, 0), -1)
+        cv2.rectangle(dst, (0, 750), (50, 800), (0, 0, 0), -1)
+        cv2.rectangle(dst, (0, 0), (1200, 12), (0, 0, 0), -1)
+        cv2.rectangle(dst, (0, 0), (12, 800), (0, 0, 0), -1)
+        cv2.rectangle(dst, (1200, 800), (1188, 0), (0, 0, 0), -1)
+        cv2.rectangle(dst, (1200, 800), (0, 788), (0, 0, 0), -1)
 
         # Adding a Grid
         square_size = 10  # Size of each square in pixels
-        grid_img = dst.copy()
-
-        grid_img = Grid.add_grid(grid_img, square_size)
 
         # Displaying different results
-        '''cv2.imshow('Hitbox', dst)
-        cv2.imshow('Grid', grid_img)
-        cv2.rectangle(grid_img, (0, 0), final_size, (255, 255, 255), -1)
-        grid_img = Grid.add_grid(grid_img, square_size)
-        cv2.imshow('Grid', grid_img)'''
-
-        cv2.imshow('Cropped image', cropped_image)
+        cv2.imshow('Hitbox', dst)
 
         img_copy = dst.copy()
 
         # Define the centers of the circles
-        circle_centers = [(103, 797), (140, 797), (175, 797), (215, 797), (250, 797), (760, 3)]
-        circle_centers_grey = [(802, 3), (839, 3), (877, 3), (914, 3), (950, 3), (987, 3)]
-        circle_radius = 15
+        circle_centers = [(103, 798), (140, 798), (175, 798), (215, 798), (250, 799), (760, 3)]
+        circle_centers_grey = [(802, 2), (839, 2), (877, 2), (914, 2), (950, 2), (987, 2)]
+        circle_radius = 13
         # Get the mean HSV values for each circle
         mean_hsv_values = []
         # Get the mean BGR values for each circle
         mean_bgr_values = []
 
         for center in circle_centers:
-            mean_hsv = get_mean_hsv(dst, center)
+            mean_hsv = get_mean_hsv(Cal_img, center)
             mean_hsv_values.append(mean_hsv)
 
         for center_grey in circle_centers_grey:
-            mean_bgr = get_mean_bgr(dst, center_grey)
+            mean_bgr = get_mean_bgr(Cal_img, center_grey)
             mean_bgr_values.append(mean_bgr)
 
         # Print the mean HSV values
         for i in range(6):
-            '''print(f"Circle {i + 1}: Mean HSV = {mean_hsv_values[i][0]} / {mean_hsv_values[i][1]} / {mean_hsv_values[i][2]}")
-            print(f" Grey Circle {i + 1}: Mean BGR = {mean_bgr_values[i][0]} / {mean_bgr_values[i][1]} / {mean_bgr_values[i][2]}")
+            print(
+                f"Circle {i + 1}: Mean HSV = {mean_hsv_values[i][0]} / {mean_hsv_values[i][1]} / {mean_hsv_values[i][2]}")
+            '''print(f" Grey Circle {i + 1}: Mean BGR = {mean_bgr_values[i][0]} / {mean_bgr_values[i][1]} / {mean_bgr_values[i][2]}")
             print(f"\n")'''
             # Convert HSV mean values to BGR in order to draw on the frame 'img_copy'
             bgr_color = cv2.cvtColor(
@@ -374,97 +351,101 @@ while True:
 
         cv2.imshow("Color calibration", img_copy)
 
-        hsv_img = cv2.cvtColor(cropped_image, cv2.COLOR_BGR2HSV)
+        hsv_img = cv2.cvtColor(dst, cv2.COLOR_BGR2HSV)
+
         for i in range(6):
             # Definition of mask boundaries with the previously acquired mean values
             if i == 1:
                 # Blue
                 bound_lower = np.array(
-                    [mean_hsv_values[i][0] - 8, mean_hsv_values[i][1] - 15, mean_hsv_values[i][2] - 10])
-                bound_upper = np.array([mean_hsv_values[i][0] + 8, 255, 210])
+                    [mean_hsv_values[i][0] - 15, mean_hsv_values[i][1], 0])
+                bound_upper = np.array([mean_hsv_values[i][0] + 30, 255, 255])
                 blue_mask = cv2.inRange(hsv_img, bound_lower, bound_upper)
             elif i == 3:
                 # Magenta
                 bound_lower = np.array(
                     [mean_hsv_values[i][0] - 8, mean_hsv_values[i][1] - 100, 0])
-                bound_upper = np.array([mean_hsv_values[i][0] + 8, 255, 255])
+                bound_upper = np.array([255, 255, 255])
                 magenta_mask = cv2.inRange(hsv_img, bound_lower, bound_upper)
             elif i == 4:
                 # Red
                 bound_lower = np.array(
-                    [mean_hsv_values[i][0] - 20, mean_hsv_values[i][1] - 100, 0])
-                bound_upper = np.array([mean_hsv_values[i][0], 255, 255])
+                    [0, 130, 0])
+                bound_upper = np.array([35, 255, 255])
                 red_mask = cv2.inRange(hsv_img, bound_lower, bound_upper)
             elif i == 5:
                 # White
                 bound_lower = np.array(
-                    [0, 0, mean_hsv_values[i][2] + 10])
-                bound_upper = np.array([180, mean_hsv_values[i][2], 255])
+                    [0, 0, mean_hsv_values[i][2] + 25])
+                bound_upper = np.array([180, 255, 255])
                 white_mask = cv2.inRange(hsv_img, bound_lower, bound_upper)
+
             elif i == 2:
                 # Grey
                 bound_lower = np.array(
                     [mean_bgr_values[0][0] - 25, mean_bgr_values[0][1] - 25, mean_bgr_values[0][2] - 25])
                 bound_upper = np.array(
-                    [mean_bgr_values[3][0] - 5, mean_bgr_values[3][1] - 5, mean_bgr_values[3][1] - 5])
-                grey_mask = cv2.inRange(cropped_image, bound_lower, bound_upper)
+                    [mean_bgr_values[5][0] + 35, mean_bgr_values[5][1] + 35, mean_bgr_values[5][1] + 35])
+                grey_mask = cv2.inRange(dst, bound_lower, bound_upper)
 
-        kernel = np.ones((14, 14), np.uint8)
+        kernel = np.ones((13, 13), np.uint8)
         grey_kernel = np.ones((17, 17), np.uint8)
-        black_mask = cv2.inRange(cropped_image, (0, 0, 0), (1, 1, 1))
+        black_mask = cv2.inRange(dst, (0, 0, 0), (1, 1, 1))
 
         # Definition and displaying of different masks
         black_mask = cv2.morphologyEx(black_mask, cv2.MORPH_CLOSE, kernel)
         black_mask = cv2.morphologyEx(black_mask, cv2.MORPH_OPEN, kernel)
 
-        display_black_mask = cv2.bitwise_and(cropped_image, cropped_image, mask=black_mask)
+        display_black_mask = cv2.bitwise_and(dst, dst, mask=black_mask)
 
         blue_mask = cv2.morphologyEx(blue_mask, cv2.MORPH_CLOSE, kernel)
         blue_mask = cv2.morphologyEx(blue_mask, cv2.MORPH_OPEN, kernel)
 
-        display_blue_mask = cv2.bitwise_and(cropped_image, cropped_image, mask=blue_mask)
+        display_blue_mask = cv2.bitwise_and(dst, dst, mask=blue_mask)
 
         magenta_mask = cv2.morphologyEx(magenta_mask, cv2.MORPH_CLOSE, kernel)
         magenta_mask = cv2.morphologyEx(magenta_mask, cv2.MORPH_OPEN, kernel)
 
-        display_magenta_mask = cv2.bitwise_and(cropped_image, cropped_image, mask=magenta_mask)
+        display_magenta_mask = cv2.bitwise_and(dst, dst, mask=magenta_mask)
 
         red_mask = cv2.morphologyEx(red_mask, cv2.MORPH_CLOSE, kernel)
         red_mask = cv2.morphologyEx(red_mask, cv2.MORPH_OPEN, kernel)
 
-        display_red_mask = cv2.bitwise_and(cropped_image, cropped_image, mask=red_mask)
+        display_red_mask = cv2.bitwise_and(dst, dst, mask=red_mask)
 
         grey_mask = cv2.morphologyEx(grey_mask, cv2.MORPH_CLOSE, grey_kernel)
         grey_mask = cv2.morphologyEx(grey_mask, cv2.MORPH_OPEN, grey_kernel)
 
-        display_grey_mask = cv2.bitwise_and(cropped_image, cropped_image, mask=grey_mask)
+        display_grey_mask = cv2.bitwise_and(dst, dst, mask=grey_mask)
 
         white_mask = cv2.morphologyEx(white_mask, cv2.MORPH_CLOSE, kernel)
         white_mask = cv2.morphologyEx(white_mask, cv2.MORPH_OPEN, kernel)
 
-        display_white_mask = cv2.bitwise_and(cropped_image, cropped_image, mask=white_mask)
+        display_white_mask = cv2.bitwise_and(dst, dst, mask=white_mask)
         # Making a new red mask out of magenta and red
-        red_mask = cv2.bitwise_or(magenta_mask, red_mask)
+        final_red_mask = cv2.bitwise_or(magenta_mask, red_mask)
 
         # Display the blended mask
-        display_red_mask = cv2.bitwise_and(cropped_image, cropped_image, mask=red_mask)
+        display_final_red_mask = cv2.bitwise_and(dst, dst, mask=final_red_mask)
 
-        '''cv2.imshow("Blue mask", display_blue_mask)
-        cv2.imshow("Red mask", display_red_mask)
+        cv2.imshow("Blue mask", display_blue_mask)
+        cv2.imshow("Final red mask", display_final_red_mask)
         cv2.imshow("Grey mask", display_grey_mask)
-        cv2.imshow("White mask", display_white_mask)'''
+        cv2.imshow("White mask", display_white_mask)
+        '''cv2.imshow("Magenta mask", display_magenta_mask)
+        cv2.imshow("Red mask", display_red_mask)'''
 
         # Combine all masks into a dictionary with mask names as keys
         all_masks = {
             'blue': blue_mask,
-            'red': red_mask,
+            'red': final_red_mask,
             'grey': grey_mask,
             'white': white_mask,
             'black': black_mask
         }
 
         # Apply the function to color the boxes
-        img_with_colored_boxes, grid = Grid.color_boxes_with_masks(cropped_image, all_masks)
+        img_with_colored_boxes, grid = Grid.color_boxes_with_masks(dst, all_masks)
         img_with_colored_boxes_corrected = Grid.remove_small_color_groups(img_with_colored_boxes)
         img_with_colored_boxes_corrected = Grid.add_grid(img_with_colored_boxes_corrected, square_size)
         img_JPS = img_with_colored_boxes_corrected.copy()
@@ -486,7 +467,7 @@ while True:
         # Display or save the image with numbers
         cv2.imshow('Grid with Numbers', img_with_colored_boxes_corrected)
 
-        green_zone = JPS_Pathfinding.find_color_centers(grid, 9)
+        '''green_zone = JPS_Pathfinding.find_color_centers(grid, 9)
         blue_cube = JPS_Pathfinding.find_color_centers(grid, 1)
         red_zone = JPS_Pathfinding.find_color_centers(grid, 8)
         yellow_zone = JPS_Pathfinding.find_color_centers(grid, 6)
@@ -497,7 +478,6 @@ while True:
 
         JPS_Pathfinding.jps_algorithm(grid, green_zone[0], blue_cube[0], square_size, img_JPS)
         JPS_Pathfinding.jps_algorithm(grid, blue_cube[0], blue_zone[0], square_size, img_JPS)
-        JPS_Pathfinding.jps_algorithm(grid, (44, 18), (39, 18), square_size, img_JPS)
 
         white_cubes = JPS_Pathfinding.find_color_centers(grid, 3)
 
@@ -522,7 +502,7 @@ while True:
 
         cv2.imshow('JPS* result', img_JPS)
         cv2.imshow('JPS* result 2', img_JPS2)
-        cv2.imshow('JPS* result 3', img_JPS3)
+        cv2.imshow('JPS* result 3', img_JPS3)'''
 
     if cv2.waitKey(1) & 0xFF == ord('q'):
         break
