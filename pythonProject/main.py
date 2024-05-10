@@ -156,7 +156,7 @@ rectangles = [
     ((224, 21), (309, 106), (167, 3, 255))  # Yellow zone
 ]
 
-cpt = 5
+cpt = 1
 
 while True:
     if TEST == 0:
@@ -376,21 +376,21 @@ while True:
             elif i == 5:
                 # White
                 bound_lower = np.array(
-                    [0, 0, mean_hsv_values[i][2] + 25])
-                bound_upper = np.array([180, 255, 255])
+                    [0, 0, mean_hsv_values[i][2] + 35])
+                bound_upper = np.array([180, 65, 255])
                 white_mask = cv2.inRange(hsv_img, bound_lower, bound_upper)
-
             elif i == 2:
                 # Grey
                 bound_lower = np.array(
-                    [mean_bgr_values[0][0] - 25, mean_bgr_values[0][1] - 25, mean_bgr_values[0][2] - 25])
+                    [mean_bgr_values[0][0] - 30, mean_bgr_values[0][1] - 30, mean_bgr_values[0][2] - 30])
                 bound_upper = np.array(
                     [mean_bgr_values[5][0] + 35, mean_bgr_values[5][1] + 35, mean_bgr_values[5][1] + 35])
                 grey_mask = cv2.inRange(dst, bound_lower, bound_upper)
 
         kernel = np.ones((13, 13), np.uint8)
-        grey_kernel = np.ones((17, 17), np.uint8)
+        grey_kernel = np.ones((20, 20), np.uint8)
         black_mask = cv2.inRange(dst, (0, 0, 0), (1, 1, 1))
+
 
         # Definition and displaying of different masks
         black_mask = cv2.morphologyEx(black_mask, cv2.MORPH_CLOSE, kernel)
@@ -416,8 +416,6 @@ while True:
         grey_mask = cv2.morphologyEx(grey_mask, cv2.MORPH_CLOSE, grey_kernel)
         grey_mask = cv2.morphologyEx(grey_mask, cv2.MORPH_OPEN, grey_kernel)
 
-        display_grey_mask = cv2.bitwise_and(dst, dst, mask=grey_mask)
-
         white_mask = cv2.morphologyEx(white_mask, cv2.MORPH_CLOSE, kernel)
         white_mask = cv2.morphologyEx(white_mask, cv2.MORPH_OPEN, kernel)
 
@@ -427,6 +425,10 @@ while True:
 
         # Display the blended mask
         display_final_red_mask = cv2.bitwise_and(dst, dst, mask=final_red_mask)
+
+        grey_mask = cv2.bitwise_and(grey_mask, cv2.bitwise_not(final_red_mask))
+        grey_mask = cv2.bitwise_and(grey_mask, cv2.bitwise_not(blue_mask))
+        display_grey_mask = cv2.bitwise_and(dst, dst, mask=grey_mask)
 
         cv2.imshow("Blue mask", display_blue_mask)
         cv2.imshow("Final red mask", display_final_red_mask)
@@ -446,7 +448,7 @@ while True:
 
         # Apply the function to color the boxes
         img_with_colored_boxes, grid = Grid.color_boxes_with_masks(dst, all_masks)
-        img_with_colored_boxes_corrected = Grid.remove_small_color_groups(img_with_colored_boxes)
+        img_with_colored_boxes_corrected, grid = Grid.remove_small_color_groups(img_with_colored_boxes, grid)
         img_with_colored_boxes_corrected = Grid.add_grid(img_with_colored_boxes_corrected, square_size)
         img_JPS = img_with_colored_boxes_corrected.copy()
         cv2.imshow('Colored Grid', img_with_colored_boxes_corrected)
@@ -467,7 +469,7 @@ while True:
         # Display or save the image with numbers
         cv2.imshow('Grid with Numbers', img_with_colored_boxes_corrected)
 
-        '''green_zone = JPS_Pathfinding.find_color_centers(grid, 9)
+        green_zone = JPS_Pathfinding.find_color_centers(grid, 9)
         blue_cube = JPS_Pathfinding.find_color_centers(grid, 1)
         red_zone = JPS_Pathfinding.find_color_centers(grid, 8)
         yellow_zone = JPS_Pathfinding.find_color_centers(grid, 6)
@@ -497,12 +499,12 @@ while True:
         JPS_Pathfinding.jps_algorithm(grid, red_cubes[2], red_zone[0], square_size, img_JPS3)
         JPS_Pathfinding.jps_algorithm(grid, red_zone[0], red_cubes[3], square_size, img_JPS3)
         JPS_Pathfinding.jps_algorithm(grid, red_cubes[3], red_zone[0], square_size, img_JPS3)
-        JPS_Pathfinding.jps_algorithm(grid, red_zone[0], red_cubes[4], square_size, img_JPS3)
-        JPS_Pathfinding.jps_algorithm(grid, red_cubes[4], red_zone[0], square_size, img_JPS3)
+        '''JPS_Pathfinding.jps_algorithm(grid, red_zone[0], red_cubes[4], square_size, img_JPS3)
+        JPS_Pathfinding.jps_algorithm(grid, red_cubes[4], red_zone[0], square_size, img_JPS3)'''
 
         cv2.imshow('JPS* result', img_JPS)
         cv2.imshow('JPS* result 2', img_JPS2)
-        cv2.imshow('JPS* result 3', img_JPS3)'''
+        cv2.imshow('JPS* result 3', img_JPS3)
 
     if cv2.waitKey(1) & 0xFF == ord('q'):
         break

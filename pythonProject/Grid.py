@@ -82,16 +82,16 @@ def color_boxes_with_masks(grid_img, masks):
             # Check if the current box falls within the specified regions
             if 7 <= grid_y <= 14 and 27 <= grid_x <= 34:
                 grid[grid_y, grid_x] = color_values[(167, 3, 255)]  # Mark as yellow zone
-                cv2.rectangle(img_with_colored_boxes, (x, y), (x + square_size, y + square_size), (167, 3, 255), -1)
+                cv2.rectangle(img_with_colored_boxes, (x, y), (x + square_size, y + square_size), (0, 242, 255), -1)
             elif 7 <= grid_y <= 14 and 84 <= grid_x <= 91:
                 grid[grid_y, grid_x] = color_values[(255, 88, 2)]  # Mark as blue zone
-                cv2.rectangle(img_with_colored_boxes, (x, y), (x + square_size, y + square_size), (255, 88, 2), -1)
+                cv2.rectangle(img_with_colored_boxes, (x, y), (x + square_size, y + square_size), (232, 162, 0), -1)
             elif 65 <= grid_y <= 72 and 27 <= grid_x <= 34:
                 grid[grid_y, grid_x] = color_values[(1, 37, 255)]  # Mark as red zone
-                cv2.rectangle(img_with_colored_boxes, (x, y), (x + square_size, y + square_size), (1, 37, 255), -1)
+                cv2.rectangle(img_with_colored_boxes, (x, y), (x + square_size, y + square_size), (36, 28, 237), -1)
             elif 65 <= grid_y <= 72 and 84 <= grid_x <= 91:
                 grid[grid_y, grid_x] = color_values[(23, 143, 26)]  # Mark as green zone
-                cv2.rectangle(img_with_colored_boxes, (x, y), (x + square_size, y + square_size), (23, 143, 26), -1)
+                cv2.rectangle(img_with_colored_boxes, (x, y), (x + square_size, y + square_size), (76, 177, 34), -1)
             else:
                 # Mark other boxes according to their colors
                 grid[grid_y, grid_x] = color_values[mask_color]
@@ -99,7 +99,9 @@ def color_boxes_with_masks(grid_img, masks):
     return img_with_colored_boxes, grid
 
 
-def remove_small_color_groups(img_with_colored_boxes):
+
+
+def remove_small_color_groups(img_with_colored_boxes, grid):
     square_size = 10  # Size of each square in pixels
 
     # Copy the image
@@ -118,8 +120,13 @@ def remove_small_color_groups(img_with_colored_boxes):
                         same_color_neighbors += 1
 
             # If less than 3 neighbors of the same color, change color to white
-            if same_color_neighbors < 2:
+            if same_color_neighbors < 3:
                 cv2.rectangle(img_with_filtered_color_groups, (x, y), (x + square_size, y + square_size),
                               (255, 255, 255), -1)
+                grid_y = y // square_size
+                grid_x = x // square_size
+                grid[grid_y, grid_x] = 0
 
-    return img_with_filtered_color_groups
+    return img_with_filtered_color_groups, grid
+
+
