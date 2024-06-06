@@ -213,6 +213,30 @@ def find_color_centers(grid, target_color):
 
     return Color_centers
 
+def replace_cluster_with_white(img_with_colored_boxes, grid, cluster_centers, square_size):
+    img_with_white_clusters = img_with_colored_boxes.copy()
+    for center_y, center_x in cluster_centers:
+        for dy in range(-1, 2):
+            for dx in range(-1, 2):
+                y = center_y + dy
+                x = center_x + dx
+                if 0 <= y < grid.shape[0] and 0 <= x < grid.shape[1] and grid[y, x] in [1, 2, 3, 4]:
+                    grid[y, x] = 0  # Change the value in the grid to white
+                    cv2.rectangle(img_with_white_clusters, (x * square_size, y * square_size),
+                                  ((x + 1) * square_size, (y + 1) * square_size), (255, 255, 255), -1)
+    return img_with_white_clusters, grid
+
+def draw_cluster_centers(img_with_colored_boxes, cluster_centers, square_size):
+    img_with_centers = img_with_colored_boxes.copy()
+    for center_y, center_x in cluster_centers:
+        # Draw a circle centered at the cluster center
+        cv2.circle(img_with_centers, (((center_x - 1) * square_size) + (square_size // 2),
+                                      ((center_y - 1) * square_size) + (square_size // 2)),
+                   7 * square_size, (255, 3, 255), 2)  # Adjust the size of the circle as needed
+    return img_with_centers
+
+
+
 
 def manhattan_distance(point1, point2):
     return abs(point1[0] - point2[0]) + abs(point1[1] - point2[1])

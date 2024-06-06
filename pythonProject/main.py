@@ -5,6 +5,10 @@ import Grid
 import JPS_Pathfinding
 import os
 import json
+import sys
+
+# 0 for camera, 1 for photos
+TEST = 1
 
 ARUCO_DICT = cv2.aruco.DICT_6X6_250  # Dictionary ID
 SQUARES_VERTICALLY = 7  # Number of squares vertically
@@ -12,6 +16,18 @@ SQUARES_HORIZONTALLY = 5  # Number of squares horizontally
 SQUARE_LENGTH = 300  # Square side length (in pixels)
 MARKER_LENGTH = 150  # ArUco marker side length (in pixels)
 MARGIN_PX = 100  # Margins size (in pixels)
+
+
+# Si vous avez une webcam intégrée dans votre ordinateur, alors celle qui filme la carte aura probalement l'id 1
+cap = cv2.VideoCapture(1, cv2.CAP_DSHOW)
+cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1920)
+cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 1080)
+cap.set(cv2.CAP_PROP_FPS, 30)
+cap.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc(*'MJPG'))
+
+success, frame = cap.read()
+
+
 
 IMG_SIZE = tuple(i * SQUARE_LENGTH + 2 * MARGIN_PX for i in (SQUARES_VERTICALLY, SQUARES_HORIZONTALLY))
 OUTPUT_NAME = 'Images\ChArUco_Marker.png'
@@ -93,10 +109,6 @@ def get_mean_bgr(image, center):
     mean_bgr = cv2.mean(bgr_image, mask=circle_mask)[:3]
     return tuple(map(round, mean_bgr))
 
-
-# 0 for camera, 1 for photos
-TEST = 1
-
 final_size = (1200, 800)
 
 img_dir = "C:\Documents\Foundation_project\pythonProject\Images"
@@ -121,8 +133,7 @@ with open(json_file_path, 'r') as file:  # Read the JSON file
 mtx = np.array(json_data['mtx'])
 dist = np.array(json_data['dist'])
 
-if TEST != 1:
-    cap = cv2.VideoCapture(0)
+
 
 # Defintion of the aruco detection parameters
 aruco_dict = aruco.getPredefinedDictionary(aruco.DICT_ARUCO_ORIGINAL)
@@ -146,7 +157,6 @@ nomImages = (
 
 nbImages = len(nomImages)
 
-frame = cv2.imread(nomImages[0])
 
 # Define the rectangles
 rectangles = [
@@ -335,9 +345,8 @@ while True:
 
         # Print the mean HSV values
         for i in range(6):
-            print(
-                f"Circle {i + 1}: Mean HSV = {mean_hsv_values[i][0]} / {mean_hsv_values[i][1]} / {mean_hsv_values[i][2]}")
-            '''print(f" Grey Circle {i + 1}: Mean BGR = {mean_bgr_values[i][0]} / {mean_bgr_values[i][1]} / {mean_bgr_values[i][2]}")
+            '''print(f"Circle {i + 1}: Mean HSV = {mean_hsv_values[i][0]} / {mean_hsv_values[i][1]} / {mean_hsv_values[i][2]}")
+            print(f" Grey Circle {i + 1}: Mean BGR = {mean_bgr_values[i][0]} / {mean_bgr_values[i][1]} / {mean_bgr_values[i][2]}")
             print(f"\n")'''
             # Convert HSV mean values to BGR in order to draw on the frame 'img_copy'
             bgr_color = cv2.cvtColor(
@@ -351,6 +360,7 @@ while True:
 
         cv2.imshow("Color calibration", img_copy)
 
+        empty_map = cv2.imread('Images\Empty_map.jpg')
         hsv_img = cv2.cvtColor(dst, cv2.COLOR_BGR2HSV)
 
         for i in range(6):
@@ -388,8 +398,11 @@ while True:
                 grey_mask = cv2.inRange(dst, bound_lower, bound_upper)
 
         kernel = np.ones((13, 13), np.uint8)
-        grey_kernel = np.ones((20, 20), np.uint8)
+        grey_kernel = np.ones((15, 15), np.uint8)
+        empty_kernel = np.ones((100, 100), np.uint8)
         black_mask = cv2.inRange(dst, (0, 0, 0), (1, 1, 1))
+        empty_mask = cv2.inRange(empty_map, (0, 0, 0), (255, 255, 255))
+        full_mask = cv2.inRange(dst, (0, 0, 0), (255, 255, 255))
 
 
         # Definition and displaying of different masks
@@ -397,6 +410,11 @@ while True:
         black_mask = cv2.morphologyEx(black_mask, cv2.MORPH_OPEN, kernel)
 
         display_black_mask = cv2.bitwise_and(dst, dst, mask=black_mask)
+
+        empty_mask = cv2.morphologyEx(empty_mask, cv2.MORPH_CLOSE, empty_kernel)
+        empty_mask = cv2.morphologyEx(empty_mask, cv2.MORPH_OPEN, empty_kernel)
+
+        display_empty_mask = cv2.bitwise_and(empty_map, empty_map, mask=empty_mask)
 
         blue_mask = cv2.morphologyEx(blue_mask, cv2.MORPH_CLOSE, kernel)
         blue_mask = cv2.morphologyEx(blue_mask, cv2.MORPH_OPEN, kernel)
@@ -413,11 +431,9 @@ while True:
 
         display_red_mask = cv2.bitwise_and(dst, dst, mask=red_mask)
 
-        grey_mask = cv2.morphologyEx(grey_mask, cv2.MORPH_CLOSE, grey_kernel)
-        grey_mask = cv2.morphologyEx(grey_mask, cv2.MORPH_OPEN, grey_kernel)
-
         white_mask = cv2.morphologyEx(white_mask, cv2.MORPH_CLOSE, kernel)
         white_mask = cv2.morphologyEx(white_mask, cv2.MORPH_OPEN, kernel)
+
 
         display_white_mask = cv2.bitwise_and(dst, dst, mask=white_mask)
         # Making a new red mask out of magenta and red
@@ -426,14 +442,25 @@ while True:
         # Display the blended mask
         display_final_red_mask = cv2.bitwise_and(dst, dst, mask=final_red_mask)
 
+        gray_empty_map = cv2.cvtColor(empty_map, cv2.COLOR_BGR2GRAY)
+        gray_map_with_cubes = cv2.cvtColor(dst, cv2.COLOR_BGR2GRAY)
+
+        diff = cv2.absdiff(gray_empty_map, gray_map_with_cubes)
+        _, grey_mask = cv2.threshold(diff, 34, 255, cv2.THRESH_BINARY)
+
         grey_mask = cv2.bitwise_and(grey_mask, cv2.bitwise_not(final_red_mask))
         grey_mask = cv2.bitwise_and(grey_mask, cv2.bitwise_not(blue_mask))
+        grey_mask = cv2.bitwise_and(grey_mask, cv2.bitwise_not(white_mask))
+        grey_mask = cv2.morphologyEx(grey_mask, cv2.MORPH_CLOSE, grey_kernel)
+        grey_mask = cv2.morphologyEx(grey_mask, cv2.MORPH_OPEN, grey_kernel)
+
         display_grey_mask = cv2.bitwise_and(dst, dst, mask=grey_mask)
 
         cv2.imshow("Blue mask", display_blue_mask)
         cv2.imshow("Final red mask", display_final_red_mask)
         cv2.imshow("Grey mask", display_grey_mask)
         cv2.imshow("White mask", display_white_mask)
+        cv2.imshow("Whizzfe mask", display_empty_mask)
         '''cv2.imshow("Magenta mask", display_magenta_mask)
         cv2.imshow("Red mask", display_red_mask)'''
 
@@ -474,14 +501,29 @@ while True:
         red_zone = JPS_Pathfinding.find_color_centers(grid, 8)
         yellow_zone = JPS_Pathfinding.find_color_centers(grid, 6)
         blue_zone = JPS_Pathfinding.find_color_centers(grid, 7)
+        white_cubes = JPS_Pathfinding.find_color_centers(grid, 3)
+        red_cubes = JPS_Pathfinding.find_color_centers(grid, 4)
+        grey_cubes = JPS_Pathfinding.find_color_centers(grid, 2)
 
+        img_white_centers, grid = JPS_Pathfinding.replace_cluster_with_white(img_JPS, grid, grey_cubes,
+                                                                             square_size)
+        for y in range(grid.shape[0]):
+            for x in range(grid.shape[1]):
+                # Determine text position
+                text_pos = (x * 10 + 2, y * 10 + 9)
+                # Draw text on the image
+                cv2.putText(img_white_centers, str(grid[y, x]), text_pos, font, font_scale, text_color,
+                            font_thickness)
+        cv2.imshow('whiiiiite', img_white_centers)
+        img_white_centers = JPS_Pathfinding.draw_cluster_centers(img_white_centers, grey_cubes, square_size)
+        '''Faire un bitwise_not avec la carte vide pour tous les masques'''
+        cv2.imshow('whiiiite', img_white_centers)
         img_JPS2 = img_JPS.copy()
         img_JPS3 = img_JPS.copy()
 
-        JPS_Pathfinding.jps_algorithm(grid, green_zone[0], blue_cube[0], square_size, img_JPS)
+        '''JPS_Pathfinding.jps_algorithm(grid, green_zone[0], blue_cube[0], square_size, img_JPS)
         JPS_Pathfinding.jps_algorithm(grid, blue_cube[0], blue_zone[0], square_size, img_JPS)
 
-        white_cubes = JPS_Pathfinding.find_color_centers(grid, 3)
 
         JPS_Pathfinding.jps_algorithm(grid, blue_zone[0], white_cubes[0], square_size, img_JPS2)
         JPS_Pathfinding.jps_algorithm(grid, white_cubes[0], yellow_zone[0], square_size, img_JPS2)
@@ -490,7 +532,7 @@ while True:
         JPS_Pathfinding.jps_algorithm(grid, yellow_zone[0], white_cubes[2], square_size, img_JPS2)
         JPS_Pathfinding.jps_algorithm(grid, white_cubes[2], yellow_zone[0], square_size, img_JPS2)
 
-        red_cubes = JPS_Pathfinding.find_color_centers(grid, 4)
+
         JPS_Pathfinding.jps_algorithm(grid, yellow_zone[0], red_cubes[0], square_size, img_JPS3)
         JPS_Pathfinding.jps_algorithm(grid, red_cubes[0], red_zone[0], square_size, img_JPS3)
         JPS_Pathfinding.jps_algorithm(grid, red_zone[0], red_cubes[1], square_size, img_JPS3)
@@ -498,13 +540,13 @@ while True:
         JPS_Pathfinding.jps_algorithm(grid, red_zone[0], red_cubes[2], square_size, img_JPS3)
         JPS_Pathfinding.jps_algorithm(grid, red_cubes[2], red_zone[0], square_size, img_JPS3)
         JPS_Pathfinding.jps_algorithm(grid, red_zone[0], red_cubes[3], square_size, img_JPS3)
-        JPS_Pathfinding.jps_algorithm(grid, red_cubes[3], red_zone[0], square_size, img_JPS3)
+        JPS_Pathfinding.jps_algorithm(grid, red_cubes[3], red_zone[0], square_size, img_JPS3)'''
         '''JPS_Pathfinding.jps_algorithm(grid, red_zone[0], red_cubes[4], square_size, img_JPS3)
         JPS_Pathfinding.jps_algorithm(grid, red_cubes[4], red_zone[0], square_size, img_JPS3)'''
 
-        cv2.imshow('JPS* result', img_JPS)
+        '''cv2.imshow('JPS* result', img_JPS)
         cv2.imshow('JPS* result 2', img_JPS2)
-        cv2.imshow('JPS* result 3', img_JPS3)
+        cv2.imshow('JPS* result 3', img_JPS3)'''
 
     if cv2.waitKey(1) & 0xFF == ord('q'):
         break

@@ -120,7 +120,7 @@ def remove_small_color_groups(img_with_colored_boxes, grid):
                         same_color_neighbors += 1
 
             # If less than 3 neighbors of the same color, change color to white
-            if same_color_neighbors < 3:
+            if same_color_neighbors < 4:
                 cv2.rectangle(img_with_filtered_color_groups, (x, y), (x + square_size, y + square_size),
                               (255, 255, 255), -1)
                 grid_y = y // square_size
