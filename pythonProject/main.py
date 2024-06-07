@@ -8,7 +8,7 @@ import json
 import sys
 
 # 0 for camera, 1 for photos
-TEST = 1
+TEST = 0
 
 ARUCO_DICT = cv2.aruco.DICT_6X6_250  # Dictionary ID
 SQUARES_VERTICALLY = 7  # Number of squares vertically
@@ -166,7 +166,7 @@ rectangles = [
     ((224, 21), (309, 106), (167, 3, 255))  # Yellow zone
 ]
 
-cpt = 1
+cpt = 3
 
 while True:
     if TEST == 0:
@@ -322,7 +322,7 @@ while True:
         square_size = 10  # Size of each square in pixels
 
         # Displaying different results
-        cv2.imshow('Hitbox', dst)
+        '''cv2.imshow('Hitbox', dst)'''
 
         img_copy = dst.copy()
 
@@ -358,7 +358,7 @@ while True:
             cv2.circle(img_copy, (circle_centers_grey[i][0], circle_centers_grey[i][1]), circle_radius,
                        (mean_bgr_values[i][0], mean_bgr_values[i][1], mean_bgr_values[i][2]), -1)  # Draw filled circles
 
-        cv2.imshow("Color calibration", img_copy)
+        '''cv2.imshow("Color calibration", img_copy)'''
 
         empty_map = cv2.imread('Images\Empty_map.jpg')
         hsv_img = cv2.cvtColor(dst, cv2.COLOR_BGR2HSV)
@@ -386,7 +386,7 @@ while True:
             elif i == 5:
                 # White
                 bound_lower = np.array(
-                    [0, 0, mean_hsv_values[i][2] + 35])
+                    [0, 0, mean_hsv_values[i][2] + 15])
                 bound_upper = np.array([180, 65, 255])
                 white_mask = cv2.inRange(hsv_img, bound_lower, bound_upper)
             elif i == 2:
@@ -399,7 +399,9 @@ while True:
 
         kernel = np.ones((13, 13), np.uint8)
         grey_kernel = np.ones((15, 15), np.uint8)
+        white_kernel = np.ones((20, 20), np.uint8)
         empty_kernel = np.ones((100, 100), np.uint8)
+
         black_mask = cv2.inRange(dst, (0, 0, 0), (1, 1, 1))
         empty_mask = cv2.inRange(empty_map, (0, 0, 0), (255, 255, 255))
         full_mask = cv2.inRange(dst, (0, 0, 0), (255, 255, 255))
@@ -443,6 +445,7 @@ while True:
         display_final_red_mask = cv2.bitwise_and(dst, dst, mask=final_red_mask)
 
         gray_empty_map = cv2.cvtColor(empty_map, cv2.COLOR_BGR2GRAY)
+        white_mod_mask = cv2.cvtColor(display_white_mask, cv2.COLOR_BGR2GRAY)
         gray_map_with_cubes = cv2.cvtColor(dst, cv2.COLOR_BGR2GRAY)
 
         diff = cv2.absdiff(gray_empty_map, gray_map_with_cubes)
@@ -454,14 +457,31 @@ while True:
         grey_mask = cv2.morphologyEx(grey_mask, cv2.MORPH_CLOSE, grey_kernel)
         grey_mask = cv2.morphologyEx(grey_mask, cv2.MORPH_OPEN, grey_kernel)
 
+        diff = cv2.absdiff(gray_empty_map, gray_map_with_cubes)
+        _, white_mask = cv2.threshold(diff, 30, 255, cv2.THRESH_BINARY)
+
+        white_mask = cv2.bitwise_and(white_mask, cv2.bitwise_not(final_red_mask))
+        white_mask = cv2.bitwise_and(white_mask, cv2.bitwise_not(blue_mask))
+        white_mask = cv2.bitwise_and(white_mask, cv2.bitwise_not(grey_mask))
+        white_mask = cv2.morphologyEx(white_mask, cv2.MORPH_CLOSE, grey_kernel)
+        white_mask = cv2.morphologyEx(white_mask, cv2.MORPH_OPEN, grey_kernel)
+
+        display_white_mask = cv2.bitwise_and(dst, dst, mask=white_mask)
         display_grey_mask = cv2.bitwise_and(dst, dst, mask=grey_mask)
+
+        complete_mask = cv2.bitwise_or(white_mask, final_red_mask)
+        complete_mask = cv2.bitwise_or(complete_mask, blue_mask)
+        complete_mask = cv2.bitwise_or(complete_mask, grey_mask)
+
+        display_complete_mask = cv2.bitwise_and(dst, dst, mask=complete_mask)
 
         cv2.imshow("Blue mask", display_blue_mask)
         cv2.imshow("Final red mask", display_final_red_mask)
         cv2.imshow("Grey mask", display_grey_mask)
         cv2.imshow("White mask", display_white_mask)
-        cv2.imshow("Whizzfe mask", display_empty_mask)
-        '''cv2.imshow("Magenta mask", display_magenta_mask)
+        cv2.imshow("Complete mask", display_complete_mask)
+        '''cv2.imshow("Empty mask", display_empty_mask)
+        cv2.imshow("Magenta mask", display_magenta_mask)
         cv2.imshow("Red mask", display_red_mask)'''
 
         # Combine all masks into a dictionary with mask names as keys
@@ -478,7 +498,6 @@ while True:
         img_with_colored_boxes_corrected, grid = Grid.remove_small_color_groups(img_with_colored_boxes, grid)
         img_with_colored_boxes_corrected = Grid.add_grid(img_with_colored_boxes_corrected, square_size)
         img_JPS = img_with_colored_boxes_corrected.copy()
-        cv2.imshow('Colored Grid', img_with_colored_boxes_corrected)
         # Draw numbers on the image representing grid values
         font = cv2.FONT_HERSHEY_SIMPLEX
         font_scale = 0.4
@@ -507,6 +526,7 @@ while True:
 
         img_white_centers, grid = JPS_Pathfinding.replace_cluster_with_white(img_JPS, grid, grey_cubes,
                                                                              square_size)
+        img_with_colored_boxes_corrected = Grid.add_grid(img_white_centers, square_size)
         for y in range(grid.shape[0]):
             for x in range(grid.shape[1]):
                 # Determine text position
@@ -514,9 +534,8 @@ while True:
                 # Draw text on the image
                 cv2.putText(img_white_centers, str(grid[y, x]), text_pos, font, font_scale, text_color,
                             font_thickness)
-        cv2.imshow('whiiiiite', img_white_centers)
+        grey_cubes = JPS_Pathfinding.find_color_centers(grid, 2)
         img_white_centers = JPS_Pathfinding.draw_cluster_centers(img_white_centers, grey_cubes, square_size)
-        '''Faire un bitwise_not avec la carte vide pour tous les masques'''
         cv2.imshow('whiiiite', img_white_centers)
         img_JPS2 = img_JPS.copy()
         img_JPS3 = img_JPS.copy()
