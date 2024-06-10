@@ -95,7 +95,9 @@ def color_boxes_with_masks(grid_img, masks):
             else:
                 # Mark other boxes according to their colors
                 grid[grid_y, grid_x] = color_values[mask_color]
-
+            if 0 <= grid_y <= 2 and 118 <= grid_x <= 121:
+                grid[grid_y, grid_x] = color_values[(100, 100, 100)]  # Mark as green zone
+                cv2.rectangle(img_with_colored_boxes, (x, y), (x + square_size, y + square_size), (100, 100, 100), -1)
     return img_with_colored_boxes, grid
 
 
@@ -120,7 +122,7 @@ def remove_small_color_groups(img_with_colored_boxes, grid):
                         same_color_neighbors += 1
 
             # If less than 3 neighbors of the same color, change color to white
-            if same_color_neighbors < 4:
+            if same_color_neighbors < 2:
                 cv2.rectangle(img_with_filtered_color_groups, (x, y), (x + square_size, y + square_size),
                               (255, 255, 255), -1)
                 grid_y = y // square_size

@@ -226,16 +226,31 @@ def replace_cluster_with_white(img_with_colored_boxes, grid, cluster_centers, sq
                                   ((x + 1) * square_size, (y + 1) * square_size), (255, 255, 255), -1)
     return img_with_white_clusters, grid
 
-def draw_cluster_centers(img_with_colored_boxes, cluster_centers, square_size):
+
+def draw_cluster_centers_and_update_grid(img_with_colored_boxes, grid, cluster_centers, square_size):
     img_with_centers = img_with_colored_boxes.copy()
     for center_y, center_x in cluster_centers:
-        # Draw a circle centered at the cluster center
-        cv2.circle(img_with_centers, (((center_x - 1) * square_size) + (square_size // 2),
-                                      ((center_y - 1) * square_size) + (square_size // 2)),
-                   7 * square_size, (255, 3, 255), 2)  # Adjust the size of the circle as needed
-    return img_with_centers
+        # Calculate the center and radius in pixels
+        circle_center = ((center_x) * square_size + (square_size // 2),
+                         (center_y) * square_size + (square_size // 2))
+        radius = 7 * square_size
 
+        # Draw the circle on the image
+        cv2.circle(img_with_centers, circle_center, radius, (255, 3, 255), 2)
 
+        # Update the grid and image for boxes within the circle
+        for y in range(grid.shape[0]):
+            for x in range(grid.shape[1]):
+                # Calculate the box center in pixels
+                box_center = ((x * square_size) + (square_size // 2),
+                              (y * square_size) + (square_size // 2))
+                # Check if the box center is within the circle
+                if (box_center[0] - circle_center[0]) ** 2 + (box_center[1] - circle_center[1]) ** 2 <= radius ** 2:
+                    grid[y, x] = 2  # Set the value in the grid to grey
+                    cv2.rectangle(img_with_centers, (x * square_size, y * square_size),
+                                  ((x + 1) * square_size, (y + 1) * square_size), (100, 100, 100), -1)
+
+    return img_with_centers, grid
 
 
 def manhattan_distance(point1, point2):
