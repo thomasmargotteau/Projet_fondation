@@ -25,10 +25,8 @@ def jps_algorithm(grid, start, goal, square_size, image=None):
     # Implement JPS* algorithm here
     def is_valid_cell(row, col, parent):
         """Check if the cell (row, col) is within the grid and is a valid (free) cell."""
-        # Check if the cell is within the grid boundaries
         if row < 0 or col < 0 or row >= grid.shape[0] or col >= grid.shape[1]:
             return False
-        # Check if the cell is a valid (free) cell
         if grid[row, col] == 2:  # Obstacle
             return False
         return True
@@ -36,44 +34,28 @@ def jps_algorithm(grid, start, goal, square_size, image=None):
     def successors(row, col, parent):
         """Generate successor cells for the given cell using JPS*."""
         successors_list = []
-
-        # Define directional offsets for horizontal, vertical, and diagonal moves
         directions = [(0, 1), (1, 0), (0, -1), (-1, 0),  # Horizontal and vertical
                       (1, 1), (1, -1), (-1, 1), (-1, -1)]  # Diagonal
 
-        # Loop through each direction
         for dr, dc in directions:
             r, c = row + dr, col + dc
-
-            # If the cell in this direction is not valid, continue to the next direction
             if not is_valid_cell(r, c, (row, col)):
                 continue
-
-            # Check if the cell is a forced neighbor or a jump point
-            if is_valid_cell(r, c, (row, col)):  # Free cell
+            if is_valid_cell(r, c, (row, col)):
                 successors_list.append((r, c))
-            else:  # Obstacle or boundary
+            else:
                 jump_point = jump(r, c, (row, col))
                 if jump_point:
                     successors_list.append(jump_point)
-
         return successors_list
 
     def jump(row, col, parent):
-        """Jump to the next jump point."""
-        # Calculate the direction of the jump
         dr = row - parent[0]
         dc = col - parent[1]
-
-        # If the parent cell is not valid, return None
         if not is_valid_cell(row, col, parent):
             return None
-
-        # If the current cell is the goal, return it as a jump point
         if (row, col) == goal:
             return row, col
-
-        # Check if the cell is a forced neighbor
         if dr != 0 and dc != 0:  # Diagonal move
             if (is_valid_cell(row - dr, col, (row, col)) and not is_valid_cell(row - dr, col - dc, (row, col))) or \
                     (is_valid_cell(row, col - dc, (row, col)) and not is_valid_cell(row - dr, col - dc, (row, col))):
@@ -87,64 +69,41 @@ def jps_algorithm(grid, start, goal, square_size, image=None):
                 if (is_valid_cell(row + 1, col, (row, col)) and not is_valid_cell(row + 1, col - dc, (row, col))) or \
                         (is_valid_cell(row - 1, col, (row, col)) and not is_valid_cell(row - 1, col - dc, (row, col))):
                     return row, col
-
-        # Recursively search for jump points in the direction of the jump
         return jump(row + dr, col + dc, (row, col))
 
-    # Initialize the open set with the start node
     open_set = [(manhattan_distance(start, goal), start)]
-    # Initialize the closed set
     closed_set = set()
-
-    # Initialize dictionaries to store parent and g-values
     parent = {}
     g_values = {start: 0}
 
-    # Run the main loop of the algorithm
     while open_set:
-        # Select the node with the lowest f-value from the open set
         _, current = heappop(open_set)
-
-        # Check if the goal is reached
         if current == goal:
-            # Reconstruct the path
             path = [current]
             while current in parent:
                 current = parent[current]
                 path.append(current)
             path.reverse()
 
-            # If an image is provided, draw the path on the image
+            # Filter the path to store one out of every three points
+            filtered_path = [path[i] for i in range(0, len(path), 3)]
+
             if image is not None:
-                draw_path(image, path, square_size)
+                draw_path(image, filtered_path, square_size)
 
-            return path
+            return filtered_path
 
-        # Remove the current node from the open set and add it to the closed set
         closed_set.add(current)
-
-        # Generate successors for the current node
         for successor in successors(*current, current):
-            # Check if the successor is in the closed set
             if successor in closed_set:
                 continue
-
-            # Calculate the tentative g-value for the successor
             tentative_g = g_values[current] + 1
-
-            # Check if the successor is not in the open set or has a lower g-value
             if successor not in open_set or tentative_g < g_values.get(successor, float('inf')):
-                # Update the parent and g-value for the successor
                 parent[successor] = current
                 g_values[successor] = tentative_g
-
-                # Calculate the f-value (f = g + h)
                 f_value = tentative_g + manhattan_distance(successor, goal)
-
-                # Add the successor to the open set with its f-value
                 heappush(open_set, (f_value, successor))
 
-    # If no path is found, return an empty list
     return []
 
 
