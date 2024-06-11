@@ -37,6 +37,107 @@ OUTPUT_NAME = 'Images\ChArUco_Marker.png'
 token = "iT3oafW0zhvbXk4Dak_CvZCOePFJ0G_y"
 
 # Definition of functions and converting paths
+
+def main_down():
+    pin = "v4"
+    value1 = 180
+    url = f"https://lon1.blynk.cloud/external/api/update?token={token}&pin={pin}&value={value1}"
+    try:
+        response = requests.get(url)
+        response.raise_for_status()  # Will raise an HTTPError for bad responses (4xx and 5xx)
+
+        print("Request successful!")
+        print("Response:", response.json())
+
+    except requests.exceptions.HTTPError as http_err:
+        print(f"HTTP error occurred: {http_err}")
+    except Exception as err:
+        print(f"Other error occurred: {err}")
+    time.sleep(1.5)
+    print(f"Pliers down")
+
+def main_up():
+    pin = "v4"
+    value1 = 10
+    url = f"https://lon1.blynk.cloud/external/api/update?token={token}&pin={pin}&value={value1}"
+    try:
+        response = requests.get(url)
+        response.raise_for_status()  # Will raise an HTTPError for bad responses (4xx and 5xx)
+
+        print("Request successful!")
+        print("Response:", response.json())
+
+    except requests.exceptions.HTTPError as http_err:
+        print(f"HTTP error occurred: {http_err}")
+    except Exception as err:
+        print(f"Other error occurred: {err}")
+    time.sleep(1.5)
+    print(f"Pliers up")
+
+def close():
+    pin1 = "v0"
+    pin2 = "v1"
+    value2 = 170
+    value1 = 10
+    url = f"https://lon1.blynk.cloud/external/api/update?token={token}&{pin1}={value1}"
+    url2 = f"https://lon1.blynk.cloud/external/api/update?token={token}&{pin2}={value2}"
+    try:
+        response = requests.get(url)
+        response.raise_for_status()  # Will raise an HTTPError for bad responses (4xx and 5xx)
+
+        print("Request successful!")
+        print("Response:", response.json())
+
+    except requests.exceptions.HTTPError as http_err:
+        print(f"HTTP error occurred: {http_err}")
+    except Exception as err:
+        print(f"Other error occurred: {err}")
+    try:
+        response = requests.get(url2)
+        response.raise_for_status()  # Will raise an HTTPError for bad responses (4xx and 5xx)
+
+        print("Request successful!")
+        print("Response:", response.json())
+
+    except requests.exceptions.HTTPError as http_err:
+        print(f"HTTP error occurred: {http_err}")
+    except Exception as err:
+        print(f"Other error occurred: {err}")
+    time.sleep(1.5)
+    print(f"Pliers closed")
+
+def free():
+    pin1 = "v0"
+    pin2 = "v1"
+    value2 = 10
+    value1 = 170
+    url = f"https://lon1.blynk.cloud/external/api/update?token={token}&{pin1}={value1}"
+    url2 = f"https://lon1.blynk.cloud/external/api/update?token={token}&{pin2}={value2}"
+    try:
+        response = requests.get(url)
+        response.raise_for_status()  # Will raise an HTTPError for bad responses (4xx and 5xx)
+
+        print("Request successful!")
+        print("Response:", response.json())
+
+    except requests.exceptions.HTTPError as http_err:
+        print(f"HTTP error occurred: {http_err}")
+    except Exception as err:
+        print(f"Other error occurred: {err}")
+    try:
+        response = requests.get(url2)
+        response.raise_for_status()  # Will raise an HTTPError for bad responses (4xx and 5xx)
+
+        print("Request successful!")
+        print("Response:", response.json())
+
+    except requests.exceptions.HTTPError as http_err:
+        print(f"HTTP error occurred: {http_err}")
+    except Exception as err:
+        print(f"Other error occurred: {err}")
+    time.sleep(1.5)
+    print(f"Pliers open")
+
 def forward():
     pin = "v6"
     value1 = 125
@@ -53,7 +154,7 @@ def forward():
         print(f"HTTP error occurred: {http_err}")
     except Exception as err:
         print(f"Other error occurred: {err}")
-    time.sleep(0.8)
+    time.sleep(0.7)
     print(f"Going forward")
 
 def backward():
@@ -149,7 +250,7 @@ def angle_difference(current_angle, target_angle):
         diff -= 360
     return diff
 
-def convert_path_to_commands(path):
+def convert_path_to_commands(path, main_down_flag):
     commands = []
     current_angle = 180  # Assuming the initial orientation is "front" facing the -y direction.
 
@@ -166,6 +267,9 @@ def convert_path_to_commands(path):
             current_angle = target_angle
 
         commands.append("forward()")
+    # Insert "main_down" before the last three commands if main_down_flag is 1
+    if main_down_flag == 1 and len(commands) >= 3:
+        commands.insert(-3, "main_down()")
 
     # Assuming 'stop()' should be the final command
     commands.append("stop()")
@@ -841,18 +945,20 @@ while True :
                     angle = np.arctan2(direction_vector[1], direction_vector[0]) * 180 / np.pi
                     center = (int(RBCoords[0]), int(RBCoords[1]))
                     rectangle_points = cv2.boxPoints(((center), (rectangle_width, rectangle_height), angle))
+                else : stop()
     cv2.imwrite("Images\Cache.jpg", vector_img)
 
     cv2.imshow("Cache", vector_img)
 
-    commands = convert_path_to_commands(path_1)
+    commands = convert_path_to_commands(path_1, 1)
     print(f"{path_1}")
     print(f"{commands}")
 
-    commands = convert_path_to_commands(path_2)
+    commands = convert_path_to_commands(path_2, 0)
     print(f"{path_2}")
     print(f"{commands}")
-    commands = convert_path_to_commands(path_3)
+
+    commands = convert_path_to_commands(path_3, 1)
     print(f"{path_3}")
     print(f"{commands}")
 
@@ -901,7 +1007,11 @@ while True :
     commands = convert_path_to_commands_45(path_16)
     for command in commands:
         eval(command)'''
-    forward()
+
+    main_up()
+    free()
+    main_down()
+    close()
     stop()
     break
 if TEST != 1:
